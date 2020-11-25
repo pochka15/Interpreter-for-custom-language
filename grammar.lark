@@ -1,0 +1,62 @@
+start: (function_declaration
+     | function_call
+     | assignment)*
+
+function_declaration: IDENTIFIER _WS type_hint function_parameters ":" _WS function_body
+
+function_parameters: [ function_parameter ("," function_parameter)*]
+
+?function_parameter: parameter_name type_hint
+
+parameter_name: IDENTIFIER
+
+function_body: assignment | statement
+
+statement: function_call | "todo"
+
+assignment: IDENTIFIER hint "=" expression
+
+?expression: disjunction
+
+disjunction: conjunction ("||" conjunction)*
+
+conjunction: equality ("&&" equality)*
+
+equality: comparison (EQUALITY_OPERATOR comparison)*
+
+comparison: function_call_or_identifier_or_builtin_value (COMPARISON_OPERATOR function_call_or_identifier_or_builtin_value)*
+
+function_call_or_identifier_or_builtin_value: function_call | IDENTIFIER | builtin_value
+
+function_call: function_name function_arguments
+
+?function_name: IDENTIFIER
+
+function_arguments: function_argument ("," function_argument)*
+
+builtin_value: STRING | BOOLEAN | NUMBER | FLOAT_NUMBER
+
+?function_argument: IDENTIFIER | builtin_value | "(" function_call ")"
+
+type_hint: "(" TYPE ")"
+
+?hint: "(" TYPE [CONSTANT_MODIFIER] ")"
+
+// Non-terminals
+TMP_HINT: IDENTIFIER+ // TODO(@pochka15): edit
+TYPE: /int|float|str/
+CONSTANT_MODIFIER: "const"
+EQUALITY_OPERATOR: "!=" | "=="
+COMPARISON_OPERATOR: ">" | "<" | "<=" | ">="
+BOOLEAN: "true" | "false"
+FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
+
+
+%import python.DEC_NUMBER -> NUMBER
+%import python.COMMENT
+%import python.STRING
+%import common.CNAME -> IDENTIFIER
+%import common.WS -> _WS
+
+%ignore _WS
+%ignore COMMENT

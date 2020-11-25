@@ -1,0 +1,82 @@
+name (int const) = 10
+name (int) = 10
+
+# Function
+functionName (int)
+argName1 (int),
+argName2 (float),
+argName3 (str):
+    print "lol"
+
+
+# Function without arguments
+functionName (int): print "kek"
+
+# Function call
+hello "world"
+
+print (hello "world"), "Rob"
+
+# OUTPUT tree
+#----start
+#----  assignment
+#----    name
+#----    hint
+#----      int
+#----      const
+#----    disjunction
+#----      conjunction
+#----        equality
+#----          comparison
+#----            function_call_or_identifier_or_builtin_value
+#----              builtin_value	10
+#----  assignment
+#----    name
+#----    int
+#----    disjunction
+#----      conjunction
+#----        equality
+#----          comparison
+#----            function_call_or_identifier_or_builtin_value
+#----              builtin_value	10
+#----  function_declaration
+#----    functionName
+#----    type_hint	int
+#----    function_parameters
+#----      function_parameter
+#----        parameter_name	argName1
+#----        type_hint	int
+#----      function_parameter
+#----        parameter_name	argName2
+#----        type_hint	float
+#----      function_parameter
+#----        parameter_name	argName3
+#----        type_hint	str
+#----    function_body
+#----      statement
+#----        function_call
+#----          print
+#----          function_arguments
+#----            builtin_value	"lol"
+#----  function_declaration
+#----    functionName
+#----    type_hint	int
+#----    function_parameters
+#----    function_body
+#----      statement
+#----        function_call
+#----          print
+#----          function_arguments
+#----            builtin_value	"kek"
+#----  function_call
+#----    hello
+#----    function_arguments
+#----      builtin_value	"world"
+#----  function_call
+#----    print
+#----    function_arguments
+#----      function_call
+#----        hello
+#----        function_arguments
+#----          builtin_value	"world"
+#----      builtin_value	"Rob"

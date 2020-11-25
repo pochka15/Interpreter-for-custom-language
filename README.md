@@ -14,7 +14,7 @@ See [this link](./Basic%20syntax.md).
 
 ## Grammar
 
-See [this link](./Language%20grammar.md).
+See [this link](./grammar.lark).
 
 ## How to launch
 
@@ -26,6 +26,11 @@ See [this link](./Language%20grammar.md).
 python main.py input.txt
 ```
 
+## Used libraries
+
+- "lark" for parsing
+- "pytest" for testing
+
 ## Functional requirements
 
 - Interpret the designed language.
@@ -35,7 +40,7 @@ python main.py input.txt
 ## Non-functional requirements
 
 - The interpreter must be written in python 3.
-- The parsing time must take less than 2 seconds for 1000 lines of code 
+- The parsing time must take less than 2 seconds for 1000 lines of code
 
 ## How it's tested
 
