@@ -49,12 +49,9 @@ It's used "pytest" library for the unit testing. The same time the interpreter i
 
 ## Roadmap
 
-1. Create EBNF grammar for the examples given in the Basic syntax. **Don't create syntax for classes yet**
-   1. Test it.
-
-2. Interpret created grammar.
-3. Create EBNF grammar for the classes.
-4. Interpret grammar for classes.
+1. Write everything about the language
+2. Create EBNF grammar for the language
+3. Interpret created grammar.
 
 ### Finished tasks
 

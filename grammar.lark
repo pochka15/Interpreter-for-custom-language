@@ -26,7 +26,7 @@ equality: comparison (EQUALITY_OPERATOR comparison)*
 
 comparison: result (COMPARISON_OPERATOR result)*
 
-result: function_call | IDENTIFIER | builtin_value
+result: function_call | IDENTIFIER | builtin_value | "wyr"
 
 function_call: function_name _WS function_arguments
 
