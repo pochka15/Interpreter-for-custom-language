@@ -59,3 +59,7 @@ It's used "pytest" library for the unit testing. The same time the interpreter i
 ### Finished tasks
 
 - [x] Add the first version of grammar for assignment, function declarations and function calls
+
+### Somewhere in a *LONG-LONG* future
+
+1. Make some small helpful tools for the code editor like syntax highlighting, ...
