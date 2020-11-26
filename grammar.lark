@@ -24,11 +24,11 @@ conjunction: equality ("&&" equality)*
 
 equality: comparison (EQUALITY_OPERATOR comparison)*
 
-comparison: function_call_or_identifier_or_builtin_value (COMPARISON_OPERATOR function_call_or_identifier_or_builtin_value)*
+comparison: result (COMPARISON_OPERATOR result)*
 
-function_call_or_identifier_or_builtin_value: function_call | IDENTIFIER | builtin_value
+result: function_call | IDENTIFIER | builtin_value
 
-function_call: function_name function_arguments
+function_call: function_name _WS function_arguments
 
 ?function_name: IDENTIFIER
 

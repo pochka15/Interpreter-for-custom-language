@@ -46,3 +46,16 @@ python main.py input.txt
 
 It's used "pytest" library for the unit testing. The same time the interpreter is tested by analyzing some pre-configured **correct** and **incorrect** code snippets.\
 *TODO(@pochka15): think about how different phases will be tested*
+
+## Roadmap
+
+1. Create EBNF grammar for the examples given in the Basic syntax. **Don't create syntax for classes yet**
+   1. Test it.
+
+2. Interpret created grammar.
+3. Create EBNF grammar for the classes.
+4. Interpret grammar for classes.
+
+### Finished tasks
+
+- [x] Add the first version of grammar for assignment, function declarations and function calls
