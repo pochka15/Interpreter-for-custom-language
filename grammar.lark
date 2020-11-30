@@ -1,20 +1,80 @@
-start: (function_declaration
-     | function_call
-     | assignment)*
+// FOR NOW INDENTATION DOESN'T WORK?!
 
-function_declaration: IDENTIFIER _WS type_hint function_parameters ":" _WS function_body
+start: import_statement* (statement (NEWLINE statement)*)?
 
-function_parameters: [ function_parameter ("," function_parameter)*]
+import_statement: import_name | import_from
 
-?function_parameter: parameter_name type_hint
+import_name: "import" as_name ("," as_name)*
 
-parameter_name: IDENTIFIER
+import_from: "from" (".")* NAME "import" import_targets
+    | "from" (".")+ "import" import_targets
 
-function_body: assignment | statement
+import_targets: "(" as_name ("," as_name)* ")" | as_name | "*"
 
-statement: function_call | "todo"
+as_name: NAME ("as" NAME)?
 
-assignment: IDENTIFIER hint "=" expression
+identifier: NAME ("." NAME)*
+
+function_declaration: NAME type_arguments? function_parameters function_declaration_contd
+function_declaration_contd: FUNCTION_VISIBILITY_MODIFIER? ("abstract"|"overriden")? FUNCTION_RETURN_TYPE? ":" function_body
+
+type_arguments: ("<" type ("," type)* ">")
+
+function_body: indented_new_lined_statement+
+
+function_parameters: "(" NAME type ("," NAME type)* ")"
+
+type: "(" type ")" | simple_user_type ("." simple_user_type)*
+
+simple_user_type: NAME type_arguments?
+
+statement: declaration | assignment | for_statement | while_statement | expression
+
+declaration: interface_declaration | class_declaration | function_declaration
+
+interface_declaration: NAME "interface" type_arguments? interface_hint ":" interface_body
+
+interface_hint: (NAME ("," NAME)*)?
+
+interface_body: function_in_interface+
+
+function_in_interface: INDENTATION (function_declaration | function_without_body_declaration) NEWLINE
+
+function_without_body_declaration: NAME type_arguments? function_parameters FUNCTION_RETURN_TYPE
+
+property_declaration: NAME type? ("val" | "var")? PROPERTY_VISIBILITY_MODIFIER ("=" expression)?
+
+variable_declaration: NAME type? ("val" | "var")?
+
+class_declaration: NAME "class" type_arguments? class_hint ":" class_body
+
+// is abstract and which class it iherits and which interfaces are implemented
+class_hint: "abstract"? (NAME? | NAME ("," NAME)*)
+
+class_body: INDENTATION class_member_declaration NEWLINE (INDENTATION class_member_declaration NEWLINE)*
+
+class_member_declaration: function_declaration | property_declaration
+
+indented_new_lined_statement: INDENTATION statement NEWLINE
+
+assignment: directly_assignable_expression "=" expression
+  | assignable_expression ASSIGNMENT_AND_OPERATOR expression
+
+assignable_expression: prefix_unary_expression | "(" prefix_unary_expression ")"
+
+directly_assignable_expression : postfix_unary_expression assignable_suffix
+  | variable_declaration
+  | "(" directly_assignable_expression ")"
+
+assignable_suffix: type_arguments
+  | indexing_suffix
+  | navigation_suffix
+
+for_statement: label? "for" NAME ("," NAME)* "in" expression ":" indented_new_lined_statement+
+
+while_statement: label? "while" expression ":" indented_new_lined_statement+
+
+label: NAME "@"
 
 ?expression: disjunction
 
@@ -24,39 +84,76 @@ conjunction: equality ("&&" equality)*
 
 equality: comparison (EQUALITY_OPERATOR comparison)*
 
-comparison: result (COMPARISON_OPERATOR result)*
+comparison: callable_expression (COMPARISON_OPERATOR callable_expression)*
 
-result: function_call | IDENTIFIER | builtin_value | "wyr"
+callable_expression: additive_expression call_suffix?
 
-function_call: function_name _WS function_arguments
+call_suffix: type_arguments? "(" function_call_arguments ")"
 
-?function_name: IDENTIFIER
+function_call_arguments: (expression ("," expression)*)?
 
-function_arguments: function_argument ("," function_argument)*
+additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
 
-builtin_value: STRING | BOOLEAN | NUMBER | FLOAT_NUMBER
+multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
 
-?function_argument: IDENTIFIER | builtin_value | "(" function_call ")"
+prefix_unary_expression: ADDITIVE_OPERATOR* postfix_unary_expression
 
-type_hint: "(" TYPE ")"
+postfix_unary_expression: primary_expression postfix_unary_suffix*
 
-?hint: "(" TYPE [CONSTANT_MODIFIER] ")"
+postfix_unary_suffix: type_arguments | call_suffix | indexing_suffix | navigation_suffix
+
+indexing_suffix: "[" expression ("," expression)*"]"
+
+navigation_suffix: "." NAME
+
+primary_expression: "(" expression ")"
+  | identifier
+  | builtin_literal
+  | collection_literal
+  | if_expression
+  | jump_expression
+
+collection_literal: "[" expression ("," expression)* "]" | "[" "]"
+
+jump_expression: "return" expression?
+  | "continue"
+  | continue_at
+  | "break"
+  | break_at
+
+continue_at: "continue@" NAME
+
+break_at: "break@" NAME
+
+if_expression: "if" "(" expression ")" ":" indented_new_lined_statement+
+  | "if" "(" expression ")" ":" indented_new_lined_statement+ "else" ":" indented_new_lined_statement+
+
+?assignment_hint: "(" NAME [CONSTANT_MODIFIER] ")"
+
+builtin_literal: STRING | BOOLEAN | NUMBER | FLOAT_NUMBER
 
 // Non-terminals
-TMP_HINT: IDENTIFIER+ // TODO(@pochka15): edit
-TYPE: /int|float|str/
 CONSTANT_MODIFIER: "const"
 EQUALITY_OPERATOR: "!=" | "=="
-COMPARISON_OPERATOR: ">" | "<" | "<=" | ">="
 BOOLEAN: "true" | "false"
 FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
+INDENTATION: "    " // 4 whitespaces
+FUNCTION_VISIBILITY_MODIFIER: "private" | "public"
+FUNCTION_RETURN_TYPE: NAME
+PROPERTY_VISIBILITY_MODIFIER: "public" | "private"
+COMPARISON_OPERATOR:  "<" | ">" | "<=" | ">="
+ADDITIVE_OPERATOR: "+" | "-"
+PREFIX_OPERATOR: ADDITIVE_OPERATOR | "!"
+MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
+ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
 
 
 %import python.DEC_NUMBER -> NUMBER
 %import python.COMMENT
 %import python.STRING
-%import common.CNAME -> IDENTIFIER
+%import common.CNAME -> NAME
 %import common.WS -> _WS
+%import common.NEWLINE
 
 %ignore _WS
 %ignore COMMENT
