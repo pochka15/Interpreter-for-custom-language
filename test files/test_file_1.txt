@@ -1,15 +1,17 @@
-kek int val = 10
-lol int var = 10
+# kek int val = 10
+# lol int var = 10
 
 # Function
-# functionName(argName1 int, argName2 float, argName3 str) int:
-#     print("lol")
+functionName(argName1 int, argName2 float, argName3 str) int:
+    print("lol")
+    calc(12)
 
 
 # Function without arguments
-# functionName() int: return 0
+functionName() int:
+    return 0
 
 # Function call
-# hello("world")
+hello("world")
 
-# print(hello "world")
+print(hello("world"))

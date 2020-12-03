@@ -1,6 +1,4 @@
-// FOR NOW INDENTATION DOESN'T WORK?!
-
-start: import_statement* (statement (NEWLINE statement)*)?
+start: import_statement* (statement (_NL statement)*)?
 
 import_statement: import_name | import_from
 
@@ -20,9 +18,9 @@ function_declaration_contd: FUNCTION_VISIBILITY_MODIFIER? ("abstract"|"overriden
 
 type_arguments: ("<" type ("," type)* ">")
 
-function_body: indented_new_lined_statement+
+function_body: _NL indented_new_lined_statement+
 
-function_parameters: "(" NAME type ("," NAME type)* ")"
+function_parameters: "(" (NAME type ("," NAME type)*)? ")"
 
 type: "(" type ")" | simple_user_type ("." simple_user_type)*
 
@@ -38,7 +36,7 @@ interface_hint: (NAME ("," NAME)*)?
 
 interface_body: function_in_interface+
 
-function_in_interface: INDENTATION (function_declaration | function_without_body_declaration) NEWLINE
+function_in_interface: _INDENTATION (function_declaration | function_without_body_declaration) _NL
 
 function_without_body_declaration: NAME type_arguments? function_parameters FUNCTION_RETURN_TYPE
 
@@ -51,11 +49,11 @@ class_declaration: NAME "class" type_arguments? class_hint ":" class_body
 // is abstract and which class it iherits and which interfaces are implemented
 class_hint: "abstract"? (NAME? | NAME ("," NAME)*)
 
-class_body: INDENTATION class_member_declaration NEWLINE (INDENTATION class_member_declaration NEWLINE)*
+class_body: _INDENTATION class_member_declaration _NL (_INDENTATION class_member_declaration _NL)*
 
 class_member_declaration: function_declaration | property_declaration
 
-indented_new_lined_statement: INDENTATION statement NEWLINE
+indented_new_lined_statement: _INDENTATION statement _NL
 
 assignment: directly_assignable_expression "=" expression
   | assignable_expression ASSIGNMENT_AND_OPERATOR expression
@@ -137,7 +135,7 @@ CONSTANT_MODIFIER: "const"
 EQUALITY_OPERATOR: "!=" | "=="
 BOOLEAN: "true" | "false"
 FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
-INDENTATION: "    " // 4 whitespaces
+_INDENTATION: / {4}/ // 4 whitespaces
 FUNCTION_VISIBILITY_MODIFIER: "private" | "public"
 FUNCTION_RETURN_TYPE: NAME
 PROPERTY_VISIBILITY_MODIFIER: "public" | "private"
@@ -152,8 +150,8 @@ ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
 %import python.COMMENT
 %import python.STRING
 %import common.CNAME -> NAME
-%import common.WS -> _WS
-%import common.NEWLINE
+%import common.WS
+%import common.NEWLINE -> _NL
 
-%ignore _WS
+%ignore WS
 %ignore COMMENT
