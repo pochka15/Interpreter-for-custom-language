@@ -121,6 +121,7 @@ break_at: BREAK_AT NAME
 
 if_expression: "if" expression "{" statements_block "}"
   | "if" expression "{" statements_block "}" ELSE "{" statements_block "}"
+  | "if" expression "{" statements_block "}" ELSE if_expression
 
 ?assignment_hint: "(" NAME [CONSTANT_MODIFIER] ")"
 
