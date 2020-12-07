@@ -1,24 +1,22 @@
-start: import_statement* (statement (_NL statement)*)?
+start: import_statement* ((statement | declaration) (_NL (statement | declaration))*)?
 
 import_statement: import_name | import_from
 
-import_name: "import" as_name ("," as_name)*
+import_name: IMPORT as_name ("," as_name)*
 
-import_from: "from" (".")* NAME "import" import_targets
-    | "from" (".")+ "import" import_targets
+import_from: FROM (RELATIVE_LOCATION)? (NAME ((".") NAME)*)? IMPORT import_targets
 
-import_targets: "(" as_name ("," as_name)* ")" | as_name | "*"
+?import_targets: as_name ("," as_name)* | IMPORT_ALL
 
-as_name: NAME ("as" NAME)?
+?as_name: NAME ("as" NAME)?
 
-identifier: NAME ("." NAME)*
+?identifier: NAME ("." NAME)*
 
-function_declaration: NAME type_arguments? function_parameters function_declaration_contd
-function_declaration_contd: FUNCTION_VISIBILITY_MODIFIER? ("abstract"|"overriden")? FUNCTION_RETURN_TYPE? ":" function_body
+function_declaration: NAME type_arguments? function_parameters FUNCTION_VISIBILITY_MODIFIER? (OVERRIDDEN)? FUNCTION_RETURN_TYPE? "{" statements_block "}"
+
+abstract_function_declaration: NAME type_arguments? function_parameters FUNCTION_VISIBILITY_MODIFIER? (ABSTRACT)? FUNCTION_RETURN_TYPE
 
 type_arguments: ("<" type ("," type)* ">")
-
-function_body: _NL indented_new_lined_statement+
 
 function_parameters: "(" (NAME type ("," NAME type)*)? ")"
 
@@ -26,34 +24,34 @@ type: "(" type ")" | simple_user_type ("." simple_user_type)*
 
 simple_user_type: NAME type_arguments?
 
-statement: declaration | assignment | for_statement | while_statement | expression
+statement: assignment | for_statement | while_statement | expression | jump_statement
 
 declaration: interface_declaration | class_declaration | function_declaration
 
-interface_declaration: NAME "interface" type_arguments? interface_hint ":" interface_body
+interface_declaration: NAME "interface" type_arguments? parent_interfaces "{" interface_body "}"
 
-interface_hint: (NAME ("," NAME)*)?
+parent_interfaces: (NAME ("," NAME)*)?
 
-interface_body: function_in_interface+
+interface_body: interface_function_declaration+
 
-function_in_interface: _INDENTATION (function_declaration | function_without_body_declaration) _NL
+interface_function_declaration: (function_declaration | function_declaration_without_body)
 
-function_without_body_declaration: NAME type_arguments? function_parameters FUNCTION_RETURN_TYPE
+function_declaration_without_body: NAME type_arguments? function_parameters FUNCTION_RETURN_TYPE
 
-property_declaration: NAME type? ("val" | "var")? PROPERTY_VISIBILITY_MODIFIER ("=" expression)?
+property_declaration: NAME type? PROPERTY_VISIBILITY_MODIFIER? (VAL | VAR)? ("=" expression)?
 
-variable_declaration: NAME type? ("val" | "var")?
+variable_declaration: NAME type? (VAL | VAR)?
 
-class_declaration: NAME "class" type_arguments? class_hint ":" class_body
+class_declaration: NAME "class" type_arguments? ABSTRACT? class_hint "{" class_body "}"
 
-// is abstract and which class it iherits and which interfaces are implemented
-class_hint: "abstract"? (NAME? | NAME ("," NAME)*)
+// which class it inherits and which interfaces are implemented
+class_hint: (NAME ("," NAME)*)?
 
-class_body: _INDENTATION class_member_declaration _NL (_INDENTATION class_member_declaration _NL)*
+class_body: (class_member_declaration (_NL class_member_declaration)*)?
 
-class_member_declaration: function_declaration | property_declaration
+class_member_declaration: function_declaration | property_declaration | abstract_function_declaration
 
-indented_new_lined_statement: _INDENTATION statement _NL
+statements_block: (statement (_NL statement+)*)?
 
 assignment: directly_assignable_expression "=" expression
   | assignable_expression ASSIGNMENT_AND_OPERATOR expression
@@ -68,9 +66,9 @@ assignable_suffix: type_arguments
   | indexing_suffix
   | navigation_suffix
 
-for_statement: label? "for" NAME ("," NAME)* "in" expression ":" indented_new_lined_statement+
+for_statement: label? "for" NAME "in" expression "{" statements_block "}"
 
-while_statement: label? "while" expression ":" indented_new_lined_statement+
+while_statement: label? "while" expression "{" statements_block "}"
 
 label: NAME "@"
 
@@ -82,11 +80,7 @@ conjunction: equality ("&&" equality)*
 
 equality: comparison (EQUALITY_OPERATOR comparison)*
 
-comparison: callable_expression (COMPARISON_OPERATOR callable_expression)*
-
-callable_expression: additive_expression call_suffix?
-
-call_suffix: type_arguments? "(" function_call_arguments ")"
+comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
 
 function_call_arguments: (expression ("," expression)*)?
 
@@ -94,11 +88,13 @@ additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative
 
 multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
 
-prefix_unary_expression: ADDITIVE_OPERATOR* postfix_unary_expression
+prefix_unary_expression: PREFIX_OPERATOR* postfix_unary_expression
 
 postfix_unary_expression: primary_expression postfix_unary_suffix*
 
 postfix_unary_suffix: type_arguments | call_suffix | indexing_suffix | navigation_suffix
+
+call_suffix: type_arguments? "(" function_call_arguments ")"
 
 indexing_suffix: "[" expression ("," expression)*"]"
 
@@ -106,29 +102,29 @@ navigation_suffix: "." NAME
 
 primary_expression: "(" expression ")"
   | identifier
-  | builtin_literal
+  | simple_literal
   | collection_literal
   | if_expression
-  | jump_expression
 
 collection_literal: "[" expression ("," expression)* "]" | "[" "]"
 
-jump_expression: "return" expression?
-  | "continue"
+
+jump_statement: RETURN expression?
+  | CONTINUE
   | continue_at
-  | "break"
+  | BREAK
   | break_at
 
-continue_at: "continue@" NAME
+continue_at: CONTINUE_AT NAME
 
-break_at: "break@" NAME
+break_at: BREAK_AT NAME
 
-if_expression: "if" "(" expression ")" ":" indented_new_lined_statement+
-  | "if" "(" expression ")" ":" indented_new_lined_statement+ "else" ":" indented_new_lined_statement+
+if_expression: "if" expression "{" statements_block "}"
+  | "if" expression "{" statements_block "}" ELSE "{" statements_block "}"
 
 ?assignment_hint: "(" NAME [CONSTANT_MODIFIER] ")"
 
-builtin_literal: STRING | BOOLEAN | NUMBER | FLOAT_NUMBER
+simple_literal: STRING | BOOLEAN | NUMBER | FLOAT_NUMBER
 
 // Non-terminals
 CONSTANT_MODIFIER: "const"
@@ -143,7 +139,21 @@ COMPARISON_OPERATOR:  "<" | ">" | "<=" | ">="
 ADDITIVE_OPERATOR: "+" | "-"
 PREFIX_OPERATOR: ADDITIVE_OPERATOR | "!"
 MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
+IMPORT: "import"
 ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
+FROM: "from"
+RELATIVE_LOCATION: /\.+/
+IMPORT_ALL: "*"
+VAL: "val"
+VAR: "var"
+ABSTRACT: "abstract"
+OVERRIDDEN: "overridden"
+RETURN: "return"
+CONTINUE: "continue"
+BREAK: "break"
+CONTINUE_AT: "continue@"
+BREAK_AT: "break@"
+ELSE: "else"
 
 
 %import python.DEC_NUMBER -> NUMBER

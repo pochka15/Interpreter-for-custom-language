@@ -1,8 +1,10 @@
-# kek int val = 10
-# lol int var = 10
+import kek
+
+kek int val = 10
+lol int var = 10
 
 # Function
-functionName(argName1 int, argName2 float, argName3 str) int:
+functionName<Type1>(argName1 int, argName2 float, argName3 str) int:
     print("lol")
     calc(12)
 
