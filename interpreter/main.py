@@ -1,39 +1,47 @@
-import pyperclip
 from lark import Lark
 
 from code_snippet_generation import with_bold_keywords, with_italic_comments, with_this_keyword_in_bold, with_pre_tag
+from semantic_visitor import SemanticVisitor
+from tree_transformer import TreeTransformer
 
 
-def print_parsed(text_to_parse: str):
-    print(lark.parse(text_to_parse).pretty())
-
-
-def tmp():
-    code = r"""
-    names List<str> val = ["Rob", "Bob", "Ann"] 
-
-    # It's the same as
-    names List<str> val = new(["Rob", "Bob", "Ann"])
-    """
-    res = with_pre_tag(
-        with_this_keyword_in_bold(
-            with_italic_comments(
-                with_bold_keywords(code))))
-    print(res)
-    pyperclip.copy(res)
-
-
-def initialized_lark_from_file(relative_path_to_file):
+def initialized_lark_from_file(relative_path_to_file: str) -> Lark:
     with open(relative_path_to_file) as grammar_file:
         return Lark(grammar_file, start='start')
 
 
-if __name__ == "__main__":
-    lark = initialized_lark_from_file("../grammar.lark")
-    snippet = r"""
-for x in rng:
-    x = 1
-    y = "hello"
-    """
+def pretty(snippet: str) -> str:
+    return with_pre_tag(
+        with_this_keyword_in_bold(
+            with_italic_comments(
+                with_bold_keywords(snippet))))
 
-    print_parsed(snippet)
+
+def print_scopes(scopes):
+    for scope_id, scope in scopes.items():
+        print("Scope " + str(scope_id) + ":")
+        print(scope.symbols)
+
+
+def main():
+    snippet = r"""
+a int val = 5
+b int val = 6
+c int val = a + b
+print(c)
+"""
+    lark = initialized_lark_from_file('../grammar.lark')
+    lark_tree = lark.parse(snippet)
+    scopes = {}
+    transformed_tree = TreeTransformer().transform(lark_tree)
+    SemanticVisitor(scopes).visit_topdown(transformed_tree)
+
+    print(snippet)
+    print(lark_tree.pretty())
+    print("---\nAfter transformation:")
+    print(transformed_tree.pretty())
+    print_scopes(scopes)
+
+
+if __name__ == "__main__":
+    main()

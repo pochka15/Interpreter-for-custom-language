@@ -1,7 +1,8 @@
 import re
 
-keywords = ("val", "var", "return", "class", "interface", "abstract", "overridden", "this",
-            "break", "continue", "in", "private", "public", "protected", "elif", "else", "import", "from")
+keywords = ("private", "public", "true", "false", "import", "from", "val",
+            "var", "abstract", "overridden", "return", "continue",
+            "break", "else", "class", "interface", "while", "for", "this", "in")
 
 
 def with_bold_keywords(in_str: str) -> str:

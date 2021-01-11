@@ -1,55 +1,74 @@
+_comma_separated{arg}: arg ("," arg)*
+
 start: import_statement* ((statement | declaration) (_NL (statement | declaration))*)?
 
-import_statement: import_name | import_from
+import_statement: import_without_from | import_with_from
 
-import_name: IMPORT as_name ("," as_name)*
+import_without_from: _IMPORT as_name ("," as_name)*
 
-import_from: FROM (RELATIVE_LOCATION)? (NAME ((".") NAME)*)? IMPORT import_targets
+import_with_from: _FROM from_path _IMPORT import_targets
 
-?import_targets: as_name ("," as_name)* | IMPORT_ALL
+from_path: RELATIVE_LOCATION? (NAME ((".") NAME)*)?
+
+?import_targets: as_name ("," as_name)* | ALL_TARGETS
 
 ?as_name: NAME ("as" NAME)?
 
-?identifier: NAME ("." NAME)*
+?identifier: NAME
 
-function_declaration: NAME type_arguments? function_parameters FUNCTION_VISIBILITY_MODIFIER? (OVERRIDDEN)? FUNCTION_RETURN_TYPE? "{" statements_block "}"
+function_declaration: NAME type_arguments? function_parameters VISIBILITY_MODIFIER? OVERRIDDEN? FUNCTION_RETURN_TYPE? "{" statements_block "}"
 
-abstract_function_declaration: NAME type_arguments? function_parameters FUNCTION_VISIBILITY_MODIFIER? (ABSTRACT)? FUNCTION_RETURN_TYPE
+abstract_function_declaration: NAME type_arguments? function_parameters VISIBILITY_MODIFIER? ABSTRACT? FUNCTION_RETURN_TYPE
 
-type_arguments: ("<" type ("," type)* ">")
+function_parameters: "(" _comma_separated{function_parameter}? ")"
 
-function_parameters: "(" (NAME type ("," NAME type)*)? ")"
+type_arguments: "<" _comma_separated{type} ">"
 
-type: "(" type ")" | simple_user_type ("." simple_user_type)*
+function_parameter: NAME type val_or_var?
 
-simple_user_type: NAME type_arguments?
+type: "(" type ")" | _simple_user_type ("." _simple_user_type)*
 
-statement: assignment | for_statement | while_statement | expression | jump_statement
+_simple_user_type: NAME type_arguments?
 
-declaration: interface_declaration | class_declaration | function_declaration
+?statement: assignment | for_statement | while_statement | expression | jump_statement
 
-interface_declaration: NAME "interface" type_arguments? parent_interfaces "{" interface_body "}"
+?declaration: interface_declaration | class_declaration | function_declaration
 
-parent_interfaces: (NAME ("," NAME)*)?
+interface_declaration: NAME type_arguments? parents? "interface" "{" interface_body? "}"
 
-interface_body: interface_function_declaration+
+parents: _comma_separated{NAME}
 
-interface_function_declaration: (function_declaration | function_declaration_without_body)
+interface_body: interface_function_declaration (_NL interface_function_declaration)*
+
+?interface_function_declaration: function_declaration | function_declaration_without_body
 
 function_declaration_without_body: NAME type_arguments? function_parameters FUNCTION_RETURN_TYPE
 
-property_declaration: NAME type? PROPERTY_VISIBILITY_MODIFIER? (VAL | VAR)? ("=" expression)?
+property_declaration: NAME type VISIBILITY_MODIFIER? val_or_var?
 
-variable_declaration: NAME type? (VAL | VAR)?
+property_assignment: NAME type? VISIBILITY_MODIFIER? val_or_var? "=" expression
 
-class_declaration: NAME "class" type_arguments? ABSTRACT? class_hint "{" class_body "}"
+abstract_property_declaration: NAME type VISIBILITY_MODIFIER? ABSTRACT val_or_var?
 
-// which class it inherits and which interfaces are implemented
-class_hint: (NAME ("," NAME)*)?
+variable_declaration: variable_name type? val_or_var?
 
-class_body: (class_member_declaration (_NL class_member_declaration)*)?
+variable_name: NAME
 
-class_member_declaration: function_declaration | property_declaration | abstract_function_declaration
+val_or_var: VAL | VAR
+
+?class_declaration: abstract_class_declaration | non_abstract_class_declaration
+
+abstract_class_declaration: NAME type_arguments? parents? ABSTRACT "class" "{" abstract_class_body "}"
+
+non_abstract_class_declaration: NAME type_arguments? parents? "class" "{" non_abstract_class_body "}"
+
+abstract_class_body: (abstract_class_member_declaration (_NL abstract_class_member_declaration)*)?
+
+non_abstract_class_body: (non_abstract_class_member_declaration (_NL non_abstract_class_member_declaration)*)?
+
+abstract_class_member_declaration: function_declaration | property_assignment | abstract_property_declaration | abstract_function_declaration
+
+non_abstract_class_member_declaration: function_declaration | property_declaration | property_assignment
 
 statements_block: (statement (_NL statement+)*)?
 
@@ -74,33 +93,33 @@ label: NAME "@"
 
 ?expression: disjunction
 
-disjunction: conjunction ("||" conjunction)*
+?disjunction: conjunction ("||" conjunction)*
 
-conjunction: equality ("&&" equality)*
+?conjunction: equality ("&&" equality)*
 
-equality: comparison (EQUALITY_OPERATOR comparison)*
+?equality: comparison (EQUALITY_OPERATOR comparison)*
 
-comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
+?comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
 
 function_call_arguments: (expression ("," expression)*)?
 
-additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
+?additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
 
-multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
+?multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
 
-prefix_unary_expression: PREFIX_OPERATOR* postfix_unary_expression
+?prefix_unary_expression: PREFIX_OPERATOR* postfix_unary_expression
 
-postfix_unary_expression: primary_expression postfix_unary_suffix*
+?postfix_unary_expression: primary_expression postfix_unary_suffix*
 
-postfix_unary_suffix: type_arguments | call_suffix | indexing_suffix | navigation_suffix
+?postfix_unary_suffix: type_arguments | call_suffix | indexing_suffix | navigation_suffix
 
 call_suffix: type_arguments? "(" function_call_arguments ")"
 
-indexing_suffix: "[" expression ("," expression)*"]"
+indexing_suffix: "[" expression "]"
 
 navigation_suffix: "." NAME
 
-primary_expression: "(" expression ")"
+?primary_expression: "(" expression ")"
   | identifier
   | simple_literal
   | collection_literal
@@ -115,36 +134,31 @@ jump_statement: RETURN expression?
   | BREAK
   | break_at
 
-continue_at: CONTINUE_AT NAME
+continue_at: _CONTINUE_AT NAME
 
-break_at: BREAK_AT NAME
+break_at: _BREAK_AT NAME
 
 if_expression: "if" expression "{" statements_block "}"
   | "if" expression "{" statements_block "}" ELSE "{" statements_block "}"
   | "if" expression "{" statements_block "}" ELSE if_expression
 
-?assignment_hint: "(" NAME [CONSTANT_MODIFIER] ")"
-
-simple_literal: STRING | BOOLEAN | NUMBER | FLOAT_NUMBER
+?simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
 
 // Non-terminals
-CONSTANT_MODIFIER: "const"
 EQUALITY_OPERATOR: "!=" | "=="
 BOOLEAN: "true" | "false"
 FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
-_INDENTATION: / {4}/ // 4 whitespaces
-FUNCTION_VISIBILITY_MODIFIER: "private" | "public"
+VISIBILITY_MODIFIER: "private" | "public"
 FUNCTION_RETURN_TYPE: NAME
-PROPERTY_VISIBILITY_MODIFIER: "public" | "private"
 COMPARISON_OPERATOR:  "<" | ">" | "<=" | ">="
 ADDITIVE_OPERATOR: "+" | "-"
 PREFIX_OPERATOR: ADDITIVE_OPERATOR | "!"
 MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
-IMPORT: "import"
+_IMPORT: "import"
 ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
-FROM: "from"
+_FROM: "from"
 RELATIVE_LOCATION: /\.+/
-IMPORT_ALL: "*"
+ALL_TARGETS: "*"
 VAL: "val"
 VAR: "var"
 ABSTRACT: "abstract"
@@ -152,15 +166,16 @@ OVERRIDDEN: "overridden"
 RETURN: "return"
 CONTINUE: "continue"
 BREAK: "break"
-CONTINUE_AT: "continue@"
-BREAK_AT: "break@"
+_CONTINUE_AT: "continue@"
+_BREAK_AT: "break@"
 ELSE: "else"
+NAME: /(?!(private|public|true|false|import|from|val|var|abstract|overridden|return|continue|break|else|class|interface|while|for|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/
 
-
-%import python.DEC_NUMBER -> NUMBER
+%import python.DEC_NUMBER
 %import python.COMMENT
 %import python.STRING
-%import common.CNAME -> NAME
+%import common.LETTER
+%import common.DIGIT
 %import common.WS
 %import common.NEWLINE -> _NL
 
