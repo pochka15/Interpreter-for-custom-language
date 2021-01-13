@@ -101,7 +101,7 @@ Some interface {
     expected = Tree('start', [Tree('interface_declaration', [Token('NAME', 'Some'), Tree('interface_body', [
         Tree('function_declaration_without_body', [Token('NAME', 'lol'), Tree('function_parameters', [
             Tree('function_parameter', [Token('NAME', 'param'), Tree('type', [Token('NAME', 'str')]),
-                                        Tree('val_or_var', [Token('VAL', 'val')])])]),
+                                        Token('VAL', 'val')])]),
                                                    Token('FUNCTION_RETURN_TYPE', 'int')]), Tree('function_declaration',
                                                                                                 [Token('NAME', 'kek'),
                                                                                                  Tree(
@@ -151,6 +151,21 @@ while ok(mood) || goodWeather(today) {
     print("Everything will be ok")
 }"""
     actual = lark.parse(snippet)
-    expected = Tree('start', [Tree('while_statement', [Tree('disjunction', [Tree('postfix_unary_expression', [Token('NAME', 'ok'), Tree('call_suffix', [Tree('function_call_arguments', [Token('NAME', 'mood')])])]), Tree('postfix_unary_expression', [Token('NAME', 'goodWeather'), Tree('call_suffix', [Tree('function_call_arguments', [Token('NAME', 'today')])])])]), Tree('statements_block', [Tree('postfix_unary_expression', [Token('NAME', 'print'), Tree('call_suffix', [Tree('function_call_arguments', [Token('STRING', '"Everything will be ok"')])])])])])])
+    expected = Tree('start', [Tree('while_statement', [Tree('disjunction', [Tree('postfix_unary_expression',
+                                                                                 [Token('NAME', 'ok'),
+                                                                                  Tree('call_suffix', [
+                                                                                      Tree('function_call_arguments',
+                                                                                           [Token('NAME', 'mood')])])]),
+                                                                            Tree('postfix_unary_expression',
+                                                                                 [Token('NAME', 'goodWeather'),
+                                                                                  Tree('call_suffix', [
+                                                                                      Tree('function_call_arguments', [
+                                                                                          Token('NAME',
+                                                                                                'today')])])])]),
+                                                       Tree('statements_block', [Tree('postfix_unary_expression',
+                                                                                      [Token('NAME', 'print'),
+                                                                                       Tree('call_suffix', [Tree(
+                                                                                           'function_call_arguments', [
+                                                                                               Token('STRING',
+                                                                                                     '"Everything will be ok"')])])])])])])
     compare_trees(expected, actual)
-

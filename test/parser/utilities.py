@@ -1,11 +1,8 @@
-from typing import Iterable
-
 import pyperclip
 import pytest
-from lark import Token
 from lark.lark import Lark, Tree
 
-from main import initialized_lark_from_file
+from main import initialized_lark_from_file, fetched_tokens
 
 
 @pytest.fixture(scope="module")
@@ -15,13 +12,6 @@ def lark() -> Lark:
 
 def clip(tree: Tree):
     pyperclip.copy(str(tree))
-
-
-def tokens(tree: Tree) -> Iterable[Token]:
-    for t in tree.iter_subtrees_topdown():
-        for child in t.children:
-            if isinstance(child, Token):
-                yield child
 
 
 def compare_trees(expected_tree: Tree, actual_tree: Tree):
@@ -37,7 +27,7 @@ Actual tree:
     """, False)
 
         # When the data is equal compare all the tokens
-        for actual_token, expected_token in zip(tokens(actual_tree), tokens(expected_tree)):
+        for actual_token, expected_token in zip(fetched_tokens(actual_tree), fetched_tokens(expected_tree)):
             if not actual_token == expected_token:
                 pytest.fail(f"Expected token: {expected_token.__repr__()}\nActual token: {actual_token.__repr__()}\n"
                             f"Actual tree:\n {str(actual_tree)}", False)

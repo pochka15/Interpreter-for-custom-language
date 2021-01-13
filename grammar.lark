@@ -1,5 +1,7 @@
 _comma_separated{arg}: arg ("," arg)*
 
+_parenthesized{arg}: "(" arg ")"
+
 start: import_statement* ((statement | declaration) (_NL (statement | declaration))*)?
 
 import_statement: import_without_from | import_with_from
@@ -26,7 +28,7 @@ type_arguments: "<" _comma_separated{type} ">"
 
 function_parameter: NAME type val_or_var?
 
-type: "(" type ")" | _simple_user_type ("." _simple_user_type)*
+type: _parenthesized{type} | _simple_user_type ("." _simple_user_type)*
 
 _simple_user_type: NAME type_arguments?
 
@@ -46,15 +48,13 @@ function_declaration_without_body: NAME type_arguments? function_parameters FUNC
 
 property_declaration: NAME type VISIBILITY_MODIFIER? val_or_var?
 
-property_assignment: NAME type? VISIBILITY_MODIFIER? val_or_var? "=" expression
+property_assignment: NAME type? VISIBILITY_MODIFIER? val_or_var? ASSIGNMENT_OPERATOR expression
 
 abstract_property_declaration: NAME type VISIBILITY_MODIFIER? ABSTRACT val_or_var?
 
-variable_declaration: variable_name type? val_or_var?
+variable_declaration: NAME type? val_or_var?
 
-variable_name: NAME
-
-val_or_var: VAL | VAR
+?val_or_var: VAL | VAR
 
 ?class_declaration: abstract_class_declaration | non_abstract_class_declaration
 
@@ -72,16 +72,16 @@ non_abstract_class_member_declaration: function_declaration | property_declarati
 
 statements_block: (statement (_NL statement+)*)?
 
-assignment: directly_assignable_expression "=" expression
+assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
   | assignable_expression ASSIGNMENT_AND_OPERATOR expression
 
-assignable_expression: prefix_unary_expression | "(" prefix_unary_expression ")"
+?assignable_expression: prefix_unary_expression | _parenthesized{prefix_unary_expression}
 
 directly_assignable_expression : postfix_unary_expression assignable_suffix
   | variable_declaration
-  | "(" directly_assignable_expression ")"
+  | _parenthesized{directly_assignable_expression}
 
-assignable_suffix: type_arguments
+?assignable_suffix: type_arguments
   | indexing_suffix
   | navigation_suffix
 
@@ -119,7 +119,7 @@ indexing_suffix: "[" expression "]"
 
 navigation_suffix: "." NAME
 
-?primary_expression: "(" expression ")"
+?primary_expression: _parenthesized{expression}
   | identifier
   | simple_literal
   | collection_literal
@@ -146,6 +146,7 @@ if_expression: "if" expression "{" statements_block "}"
 
 // Non-terminals
 EQUALITY_OPERATOR: "!=" | "=="
+ASSIGNMENT_OPERATOR: "="
 BOOLEAN: "true" | "false"
 FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
 VISIBILITY_MODIFIER: "private" | "public"

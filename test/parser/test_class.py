@@ -76,39 +76,31 @@ Male abstract class {
 """
     actual = lark.parse(snippet)
     expected = Tree('start', [Tree('abstract_class_declaration', [Token('NAME', 'Male'), Token('ABSTRACT', 'abstract'),
-                                                                  Tree('abstract_class_body',
-                                                                       [Tree('abstract_class_member_declaration', [
-                                                                           Tree('function_declaration',
-                                                                                [Token('NAME', 'foo'),
-                                                                                 Tree('function_parameters',
-                                                                                      []),
-                                                                                 Token('FUNCTION_RETURN_TYPE',
-                                                                                       'str'),
-                                                                                 Tree('statements_block', [
-                                                                                     Tree('jump_statement', [
-                                                                                         Token('RETURN',
-                                                                                               'return'),
-                                                                                         Token('STRING',
-                                                                                               '"foo"')])])])]),
-                                                                        Tree('abstract_class_member_declaration', [
-                                                                            Tree('abstract_property_declaration',
-                                                                                 [Token('NAME', 'bar'),
-                                                                                  Tree('type',
-                                                                                       [Token('NAME', 'int')]),
-                                                                                  Token('ABSTRACT', 'abstract'),
-                                                                                  Tree('val_or_var',
-                                                                                       [Token('VAL', 'val')])])]),
-                                                                        Tree('abstract_class_member_declaration', [
-                                                                            Tree('property_assignment',
-                                                                                 [Token('NAME', 'lol'),
-                                                                                  Tree('type',
-                                                                                       [Token('NAME', 'bool')]),
-                                                                                  Token('VISIBILITY_MODIFIER',
-                                                                                        'public'),
-                                                                                  Tree('val_or_var',
-                                                                                       [Token('VAR', 'var')]),
-                                                                                  Token('BOOLEAN',
-                                                                                        'false')])])])])])
+                                                                  Tree('abstract_class_body', [
+                                                                      Tree('abstract_class_member_declaration', [
+                                                                          Tree('function_declaration',
+                                                                               [Token('NAME', 'foo'),
+                                                                                Tree('function_parameters', []),
+                                                                                Token('FUNCTION_RETURN_TYPE', 'str'),
+                                                                                Tree('statements_block', [
+                                                                                    Tree('jump_statement',
+                                                                                         [Token('RETURN', 'return'),
+                                                                                          Token('STRING',
+                                                                                                '"foo"')])])])]),
+                                                                      Tree('abstract_class_member_declaration', [
+                                                                          Tree('abstract_property_declaration',
+                                                                               [Token('NAME', 'bar'),
+                                                                                Tree('type', [Token('NAME', 'int')]),
+                                                                                Token('ABSTRACT', 'abstract'),
+                                                                                Token('VAL', 'val')])]),
+                                                                      Tree('abstract_class_member_declaration', [
+                                                                          Tree('property_assignment',
+                                                                               [Token('NAME', 'lol'),
+                                                                                Tree('type', [Token('NAME', 'bool')]),
+                                                                                Token('VISIBILITY_MODIFIER', 'public'),
+                                                                                Token('VAR', 'var'),
+                                                                                Token('ASSIGNMENT_OPERATOR', '='),
+                                                                                Token('BOOLEAN', 'false')])])])])])
     compare_trees(expected, actual)
 
 
@@ -146,9 +138,8 @@ MyClass <T, P> Parent class {
                                                                                                 Tree('type', [
                                                                                                     Token('NAME',
                                                                                                           'int')]),
-                                                                                                Tree('val_or_var', [
-                                                                                                    Token('VAL',
-                                                                                                          'val')])])]),
+                                                                                                Token('VAL',
+                                                                                                      'val')])]),
                                                                                       Token('VISIBILITY_MODIFIER',
                                                                                             'private'),
                                                                                       Token('OVERRIDDEN', 'overridden'),
@@ -183,8 +174,8 @@ MyClass class {
                                                                                      [Token('NAME', 'lol'),
                                                                                       Token('VISIBILITY_MODIFIER',
                                                                                             'private'),
-                                                                                      Tree('val_or_var',
-                                                                                           [Token('VAL', 'val')]),
+                                                                                      Token('VAL', 'val'),
+                                                                                      Token('ASSIGNMENT_OPERATOR', '='),
                                                                                       Tree('postfix_unary_expression',
                                                                                            [Token('NAME', 'kek'),
                                                                                             Tree('call_suffix', [Tree(
@@ -196,8 +187,8 @@ MyClass class {
                                                                                                                  [Token(
                                                                                                                      'NAME',
                                                                                                                      'int')]),
-                                                                                      Tree('val_or_var', [Token('VAL',
-                                                                                                                'val')])])])])])])
+                                                                                      Token('VAL', 'val')])])])])])
+
     compare_trees(expected, actual)
 
 

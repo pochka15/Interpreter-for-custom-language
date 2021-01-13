@@ -89,9 +89,9 @@ def test_while_statement(lark):
         Tree('comparison', [Token('NAME', 'x'), Token('COMPARISON_OPERATOR', '<'), Token('DEC_NUMBER', '5')]),
         Tree('statements_block', [Tree('postfix_unary_expression', [Token('NAME', 'closeToZero'), Tree('call_suffix', [
             Tree('function_call_arguments', [Token('NAME', 'x')])])])]), Token('ELSE', 'else'),
-        Tree('statements_block', [Token('BOOLEAN', 'true')])]), Tree('statements_block', [Tree('assignment', [
-        Tree('assignable_expression', [Token('NAME', 'x')]), Token('ASSIGNMENT_AND_OPERATOR', '-='),
-        Token('DEC_NUMBER', '1')])])])])
+        Tree('statements_block', [Token('BOOLEAN', 'true')])]), Tree('statements_block', [
+        Tree('assignment', [Token('NAME', 'x'), Token('ASSIGNMENT_AND_OPERATOR', '-='), Token('DEC_NUMBER', '1')])])])])
+
     actual = lark.parse(snippet)
     compare_trees(expected, actual)
 
@@ -113,11 +113,22 @@ def test_for_in_list(lark):
     actual = lark.parse(snippet)
     compare_trees(expected, actual)
 
+
 def test_while_with_function_call_expression(lark):
     snippet = r"""
 while funCall(hello) {
     print("inside while")
 }"""
     actual = lark.parse(snippet)
-    expected = Tree('start', [Tree('while_statement', [Tree('postfix_unary_expression', [Token('NAME', 'funCall'), Tree('call_suffix', [Tree('function_call_arguments', [Token('NAME', 'hello')])])]), Tree('statements_block', [Tree('postfix_unary_expression', [Token('NAME', 'print'), Tree('call_suffix', [Tree('function_call_arguments', [Token('STRING', '"inside while"')])])])])])])
+    expected = Tree('start', [Tree('while_statement', [Tree('postfix_unary_expression', [Token('NAME', 'funCall'),
+                                                                                         Tree('call_suffix', [Tree(
+                                                                                             'function_call_arguments',
+                                                                                             [Token('NAME',
+                                                                                                    'hello')])])]),
+                                                       Tree('statements_block', [Tree('postfix_unary_expression',
+                                                                                      [Token('NAME', 'print'),
+                                                                                       Tree('call_suffix', [Tree(
+                                                                                           'function_call_arguments', [
+                                                                                               Token('STRING',
+                                                                                                     '"inside while"')])])])])])])
     compare_trees(expected, actual)

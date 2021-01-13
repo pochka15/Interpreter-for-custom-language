@@ -18,20 +18,17 @@ def test_assignment_with_conjunction_and_disjunction(lark):
     x int val = leftTasksNumber < 5 && (shouldWorkToday() || "Work tomorrow")
     """
     actual = lark.parse(snippet)
-    expected = Tree('start', [Tree('assignment', [Tree('directly_assignable_expression', [Tree('variable_declaration', [
-        Tree('variable_name', [Token('NAME', 'x')]), Tree('type', [Token('NAME', 'int')]),
-        Tree('val_or_var', [Token('VAL', 'val')])])]), Tree('conjunction', [Tree('comparison',
-                                                                                 [Token('NAME', 'leftTasksNumber'),
-                                                                                  Token('COMPARISON_OPERATOR', '<'),
-                                                                                  Token('DEC_NUMBER', '5')]),
-                                                                            Tree('disjunction', [
-                                                                                Tree('postfix_unary_expression',
-                                                                                     [Token('NAME', 'shouldWorkToday'),
-                                                                                      Tree('call_suffix', [Tree(
-                                                                                          'function_call_arguments',
-                                                                                          [])])]),
-                                                                                Token('STRING',
-                                                                                      '"Work tomorrow"')])])])])
+    expected = Tree('start', [Tree('assignment', [Tree('directly_assignable_expression', [
+        Tree('variable_declaration', [Token('NAME', 'x'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')])]),
+                                                  Token('ASSIGNMENT_OPERATOR', '='), Tree('conjunction', [
+            Tree('comparison',
+                 [Token('NAME', 'leftTasksNumber'), Token('COMPARISON_OPERATOR', '<'), Token('DEC_NUMBER', '5')]),
+            Tree('disjunction', [Tree('postfix_unary_expression', [Token('NAME', 'shouldWorkToday'), Tree('call_suffix',
+                                                                                                          [Tree(
+                                                                                                              'function_call_arguments',
+                                                                                                              [])])]),
+                                 Token('STRING', '"Work tomorrow"')])])])])
+
     compare_trees(expected, actual)
 
 
@@ -44,8 +41,8 @@ def test_three_new_lined_statements(lark):
     foo(x)"""
     expected_children = Tree('start',
                              [Tree('assignment', [Tree('directly_assignable_expression', [Tree('variable_declaration', [
-                                 Tree('variable_name', [Token('NAME', 'x')]), Tree('type', [Token('NAME', 'int')]),
-                                 Tree('val_or_var', [Token('VAL', 'val')])])]), Token('DEC_NUMBER', '2')]),
+                                 Token('NAME', 'x'), Tree('type', [Token('NAME', 'int')]),
+                                 Token('VAL', 'val')])]), Token('ASSIGNMENT_OPERATOR', '='), Token('DEC_NUMBER', '2')]),
                               Tree('function_declaration', [Token('NAME', 'foo'), Tree('function_parameters', [
                                   Tree('function_parameter',
                                        [Token('NAME', 'some_val'), Tree('type', [Token('NAME', 'int')])]),
@@ -144,13 +141,15 @@ abstracte int val = 5
 bval int val = 2"""
     actual = lark.parse(snippet)
     expected = Tree('start', [Tree('assignment', [Tree('directly_assignable_expression', [Tree('variable_declaration', [
-        Tree('variable_name', [Token('NAME', 'abstracte')]), Tree('type', [Token('NAME', 'int')]),
-        Tree('val_or_var', [Token('VAL', 'val')])])]), Token('DEC_NUMBER', '5')]), Tree('assignment', [
-        Tree('directly_assignable_expression', [Tree('variable_declaration',
-                                                     [Tree('variable_name', [Token('NAME', 'bval')]),
-                                                      Tree('type', [Token('NAME', 'int')]),
-                                                      Tree('val_or_var', [Token('VAL', 'val')])])]),
-        Token('DEC_NUMBER', '2')])])
+        Token('NAME', 'abstracte'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')])]),
+                                                  Token('ASSIGNMENT_OPERATOR', '='), Token('DEC_NUMBER', '5')]),
+                              Tree('assignment', [Tree('directly_assignable_expression', [Tree('variable_declaration',
+                                                                                               [Token('NAME', 'bval'),
+                                                                                                Tree('type', [
+                                                                                                    Token('NAME',
+                                                                                                          'int')]),
+                                                                                                Token('VAL', 'val')])]),
+                                                  Token('ASSIGNMENT_OPERATOR', '='), Token('DEC_NUMBER', '2')])])
     compare_trees(expected, actual)
 
 
@@ -161,5 +160,17 @@ foo(lol,
     (a < b))
 a int val = b"""
     actual = lark.parse(snippet)
-    expected = Tree('start', [Tree('postfix_unary_expression', [Token('NAME', 'foo'), Tree('call_suffix', [Tree('function_call_arguments', [Token('NAME', 'lol'), Tree('postfix_unary_expression', [Token('NAME', 'kek'), Tree('call_suffix', [Tree('function_call_arguments', [])])]), Tree('comparison', [Token('NAME', 'a'), Token('COMPARISON_OPERATOR', '<'), Token('NAME', 'b')])])])]), Tree('assignment', [Tree('directly_assignable_expression', [Tree('variable_declaration', [Tree('variable_name', [Token('NAME', 'a')]), Tree('type', [Token('NAME', 'int')]), Tree('val_or_var', [Token('VAL', 'val')])])]), Token('NAME', 'b')])])
+    expected = Tree('start', [Tree('postfix_unary_expression', [Token('NAME', 'foo'), Tree('call_suffix', [
+        Tree('function_call_arguments', [Token('NAME', 'lol'), Tree('postfix_unary_expression', [Token('NAME', 'kek'),
+                                                                                                 Tree('call_suffix', [
+                                                                                                     Tree(
+                                                                                                         'function_call_arguments',
+                                                                                                         [])])]),
+                                         Tree('comparison', [Token('NAME', 'a'), Token('COMPARISON_OPERATOR', '<'),
+                                                             Token('NAME', 'b')])])])]), Tree('assignment', [
+        Tree('directly_assignable_expression', [Tree('variable_declaration',
+                                                     [Token('NAME', 'a'), Tree('type', [Token('NAME', 'int')]),
+                                                      Token('VAL', 'val')])]), Token('ASSIGNMENT_OPERATOR', '='),
+        Token('NAME', 'b')])])
+
     compare_trees(expected, actual)

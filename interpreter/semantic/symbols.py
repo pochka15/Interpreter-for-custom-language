@@ -5,8 +5,15 @@ from dataclasses import dataclass
 class SymbolType:
     name: str
 
+    def __str__(self):
+        return self.name
 
-@dataclass
+
 class Symbol:
-    name: str
-    type: SymbolType
+    def __init__(self, name: str, sym_type: SymbolType):
+        self.sym_type = sym_type
+        self.name = name
+
+# class DirectlyAssignableExpression(Symbol):
+#     def __init__(self, name: str, sym_type: SymbolType):
+#         super().__init__(name, sym_type)
