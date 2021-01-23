@@ -4,13 +4,13 @@ _parenthesized{arg}: "(" arg ")"
 
 start: import_statement* ((statement | declaration) (_NL (statement | declaration))*)?
 
-import_statement: import_without_from | import_with_from
+?import_statement: import_without_from | import_with_from
 
 import_without_from: _IMPORT as_name ("," as_name)*
 
 import_with_from: _FROM from_path _IMPORT import_targets
 
-from_path: RELATIVE_LOCATION? (NAME ((".") NAME)*)?
+from_path: RELATIVE_LOCATION? NAME ((".") NAME)*
 
 ?import_targets: as_name ("," as_name)* | ALL_TARGETS
 
@@ -28,9 +28,9 @@ type_arguments: "<" _comma_separated{type} ">"
 
 function_parameter: NAME type val_or_var?
 
-type: _parenthesized{type} | _simple_user_type ("." _simple_user_type)*
+type: _parenthesized{type} | simple_user_type ("." simple_user_type)*
 
-_simple_user_type: NAME type_arguments?
+?simple_user_type: NAME type_arguments?
 
 ?statement: assignment | for_statement | while_statement | expression | jump_statement
 
@@ -77,7 +77,7 @@ assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
 
 ?assignable_expression: prefix_unary_expression | _parenthesized{prefix_unary_expression}
 
-directly_assignable_expression : postfix_unary_expression assignable_suffix
+?directly_assignable_expression : postfix_unary_expression assignable_suffix
   | variable_declaration
   | _parenthesized{directly_assignable_expression}
 

@@ -1,93 +1,121 @@
 from functools import partial
+from operator import itemgetter
 from typing import Iterable, Iterator
 
 from lark import Transformer, Tree, Token, v_args
 
-from language_units import VariableDeclaration, DirectlyAssignableExpression, Assignment, \
-    TreeWithLanguageUnit, TokenWithLanguageUnit, AdditiveExpression, PrefixUnaryExpression
+from language_units import *
 
 
 def is_val(value: str) -> bool:
     return True if value == 'val' else False
 
 
+def identity(x):
+    return x
+
+
 # noinspection PyTypeChecker,PyMethodMayBeStatic,PyPep8Naming
 
 
-def token_with_language_unit(applied_func, token) -> TokenWithLanguageUnit:
-    return TokenWithLanguageUnit(token, applied_func(token))
+def wrapped_token(applied_func=lambda x: x):
+    return lambda _, token: TokenAndLanguageUnitPair(token, applied_func(token.value))
 
 
-def wrap_with_token_with_language_unit(_, token) -> TokenWithLanguageUnit:
-    return TokenWithLanguageUnit(token, token.value)
+def wrapped_tree(container, children_lambda=identity):
+    def inner(_, tree):
+        return TreeWithLanguageUnit(tree, container(*(children_lambda(tree.children))))
+
+    return inner
 
 
+@v_args(tree=True)
 class TreeTransformer(Transformer):
     def __init__(self):
         super().__init__(visit_tokens=True)
 
-    ADDITIVE_OPERATOR = wrap_with_token_with_language_unit
-    NAME = wrap_with_token_with_language_unit
-    PREFIX_OPERATOR = wrap_with_token_with_language_unit
-    ASSIGNMENT_AND_OPERATOR = wrap_with_token_with_language_unit
-    ASSIGNMENT_OPERATOR = wrap_with_token_with_language_unit
+    # ADDITIVE_OPERATOR
+    # NAME
+    # PREFIX_OPERATOR
+    # ASSIGNMENT_AND_OPERATOR
+    # ASSIGNMENT_OPERATOR
+    __default_token__ = wrapped_token()
 
-    def DEC_NUMBER(self, token):
-        return token_with_language_unit(int, token)
+    DEC_NUMBER = wrapped_token(int)
 
     def VAR(self, token: Token):
         token.update("IS_VAL", token.value)
-        return token_with_language_unit(is_val, token)
+        return wrapped_token(is_val)(self, token)
 
     def VAL(self, token: Token):
         token.update("IS_VAL", token.value)
-        return token_with_language_unit(is_val, token)
+        return wrapped_token(is_val)(self, token)
 
-    @v_args(tree=True)
     def statements_block(self, block_tree: Tree):
         block_tree.children.append(Token('BLOCK_END', ''))
         return block_tree
 
-    @v_args(inline=True)
-    def type(self, type_name_token) -> Token:
-        return type_name_token
+    indexing_suffix = wrapped_tree(IndexingSuffix)
+    directly_assignable_expression = wrapped_tree(DirectlyAssignableExpression)
+    variable_declaration = wrapped_tree(VariableDeclaration)
+    expression = wrapped_tree(Expression)
+    assignment = wrapped_tree(Assignment)
+    disjunction = wrapped_tree(Disjunction, lambda children: tuple([children]))
+    conjunction = wrapped_tree(Conjunction, lambda children: tuple([children]))
+    equality = wrapped_tree(Equality, lambda children: (children[0], children[1: len(children)]))
+    import_with_from = wrapped_tree(ImportWithFrom)
+    as_name = wrapped_tree(AsName)
+    function_call_arguments = wrapped_tree(FunctionCallArguments, lambda children: tuple([children]))
+    import_targets = wrapped_tree(ImportTargets, lambda children: tuple([children]))
+    type_arguments = wrapped_tree(TypeArguments, lambda children: tuple([children]))
+    simple_user_type = wrapped_tree(SimpleUserType)
+    postfix_unary_expression = wrapped_tree(
+        PostfixUnaryExpression,
+        lambda children: (children[0], children[1: len(children)]))
+    import_without_from = wrapped_tree(
+        ImportWithoutFrom,
+        lambda children: tuple([children]))
+    multiplicative_expression = wrapped_tree(
+        MultiplicativeExpression,
+        lambda children: (children[0], children[1: len(children)]))
+    comparison = wrapped_tree(
+        Comparison,
+        lambda children: (children[0], children[1: len(children)]))
+    additive_expression = wrapped_tree(
+        AdditiveExpression,
+        lambda children: (children[0], children[1: len(children)]))
+    prefix_unary_expression = wrapped_tree(
+        PrefixUnaryExpression,
+        lambda children: (children[0:len(children) - 1], children[len(children) - 1]))
 
-    # @v_args(tree=True)
-    # def expression(self, expression_tree):
-    #     simple_literal_token = expression_tree.children[0]
-    #     return TreeWithSemanticUnit(expression_tree, Expression(simple_literal_token.value))
-
-    @v_args(tree=True)
-    def assignment(self, assignment_tree: Tree):
-        it = iter(assignment_tree.children)
-        left_expression = next(it)
-        if len(assignment_tree.children) > 2:
-            operator = next(it)
+    def from_path(self, tree: Tree) -> TreeWithLanguageUnit:
+        children = tree.children
+        pair = children[0]
+        if isinstance(pair, TokenAndLanguageUnitPair) \
+                and pair.token.type == "RELATIVE_LOCATION":
+            relative_location = pair
+            starting_ind = 1
         else:
-            operator = ""
-        right_expression = next(it)
-        return TreeWithLanguageUnit(assignment_tree,
-                                    Assignment(left_expression, operator, right_expression))
+            relative_location = None
+            starting_ind = 0
+        return TreeWithLanguageUnit(tree, FromPath(relative_location,
+                                                   children[starting_ind: len(children)]))
 
-    @v_args(tree=True)
-    def directly_assignable_expression(self, tree) -> Tree:
-        if len(tree.children) == 1:
-            return tree.children[0]
-        return TreeWithLanguageUnit(tree, DirectlyAssignableExpression(*tree.children))
+    def call_suffix(self, tree) -> TreeWithLanguageUnit:
+        children = tree.children
+        if len(children) == 2:
+            return TreeWithLanguageUnit(tree, CallSuffix(*children))
+        return TreeWithLanguageUnit(tree, CallSuffix(None, *children))
 
-    @v_args(tree=True)
-    def variable_declaration(self, tree):
-        variable_name_token, type_name_token, var_or_val_token = tree.children
-        return TreeWithLanguageUnit(
-            tree, VariableDeclaration(variable_name_token, type_name_token, var_or_val_token))
+    def type(self, tree) -> TreeWithLanguageUnit:
+        # children can be:
+        # - Type (_parenthesized{type})
+        # - 1+ SimpleUserType
+        # - Name token (reduced SimpleUserType)
+        children = tree.children
+        first = children[0]
+        if isinstance(first.unit, Type):
+            first.unit.is_parenthesized = True
+            return first
+        return TreeWithLanguageUnit(tree, Type(children, False))
 
-    @v_args(tree=True)
-    def additive_expression(self, tree):
-        return TreeWithLanguageUnit(tree, AdditiveExpression(*tree.children))
-
-    @v_args(tree=True)
-    # TODO(@pochka15): test this!!!
-    def prefix_unary_expression(self, tree):
-        prefix_operators = tree.children[0:len(tree.children) - 1]
-        postfix_unary_expression = tree.children[len(tree.children) - 1]
-        return TreeWithLanguageUnit(tree, PrefixUnaryExpression(prefix_operators, postfix_unary_expression))

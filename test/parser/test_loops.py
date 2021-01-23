@@ -17,7 +17,8 @@ def test_for_with_labeled_break(lark):
                                                           [Tree('jump_statement',
                                                                 [Tree('break_at', [Token('NAME', 'myLabel')])])])])])
     actual = lark.parse(snippet)
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_for_with_nested_for(lark):
@@ -64,7 +65,8 @@ for x in db.values {
                                                                                                   'STRING',
                                                                                                   '"inner"')])])])])])])])])
     actual = lark.parse(snippet)
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_loop_fails_when_in_omitted(lark):
@@ -93,7 +95,8 @@ def test_while_statement(lark):
         Tree('assignment', [Token('NAME', 'x'), Token('ASSIGNMENT_AND_OPERATOR', '-='), Token('DEC_NUMBER', '1')])])])])
 
     actual = lark.parse(snippet)
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_for_in_list(lark):
@@ -111,7 +114,8 @@ def test_for_in_list(lark):
                                                                   Tree('function_call_arguments',
                                                                        [Token('NAME', 'v')])])])])])])
     actual = lark.parse(snippet)
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_while_with_function_call_expression(lark):
@@ -131,4 +135,5 @@ while funCall(hello) {
                                                                                            'function_call_arguments', [
                                                                                                Token('STRING',
                                                                                                      '"inside while"')])])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes

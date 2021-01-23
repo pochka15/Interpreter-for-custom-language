@@ -14,7 +14,7 @@ def test_function_declaration_without_type_parameters(lark):
                                                                         [Token('RETURN', 'return'),
                                                                          Token('STRING',
                                                                                '"Without type"')])])])])
-    compare_trees(expected_tree, lark.parse(snippet))
+    trees_comparison_result(expected_tree, lark.parse(snippet))
 
 
 def test_function_declaration_with_type_parameters(lark):
@@ -29,7 +29,7 @@ print<T1, T2>(){
                                                                                                        'return'),
                                                                                                  Token('STRING',
                                                                                                        '"With type"')])])])])
-    compare_trees(expected_tree, lark.parse(snippet))
+    trees_comparison_result(expected_tree, lark.parse(snippet))
 
 
 def test_function_declaration_with_parameters(lark):
@@ -72,7 +72,7 @@ print(arg1 int, arg2 str){
                                                                                   'NAME',
                                                                                   'arg2')])])])])]
                          )
-    compare_trees(expected_tree, lark.parse(snippet))
+    trees_comparison_result(expected_tree, lark.parse(snippet))
 
 
 def test_function_declaration_with_overridden_hint(lark):
@@ -89,7 +89,7 @@ def test_function_declaration_with_overridden_hint(lark):
                                                                                                                'return'),
                                                                                                          Token('STRING',
                                                                                                                '"overridden"')])])])])
-    compare_trees(expected, lark.parse(snippet))
+    trees_comparison_result(expected, lark.parse(snippet))
 
 
 def test_function_declaration_with_return_type(lark):
@@ -112,4 +112,4 @@ print() private overridden ReturnType {
                                                                                                          [Token(
                                                                                                              'STRING',
                                                                                                              '"arg for the constructor"')])])])])])])])
-    compare_trees(expected, lark.parse(snippet))
+    trees_comparison_result(expected, lark.parse(snippet))

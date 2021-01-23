@@ -28,7 +28,10 @@ Male Human, Printable abstract class {
                                                                         Token(
                                                                             'FUNCTION_RETURN_TYPE',
                                                                             'str')])])])])]))
-    compare_trees(expected, actual)
+    result, mes = result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
+
+    assert result, mes
 
 
 def test_abstract_class_with_function_declarations(lark):
@@ -63,7 +66,8 @@ def test_abstract_class_with_function_declarations(lark):
                                                                                                Token(
                                                                                                    'STRING',
                                                                                                    '"bar"')])])])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_abstract_class_with_function_and_property_declarations(lark):
@@ -101,7 +105,8 @@ Male abstract class {
                                                                                 Token('VAR', 'var'),
                                                                                 Token('ASSIGNMENT_OPERATOR', '='),
                                                                                 Token('BOOLEAN', 'false')])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_class_function_declarations_without_new_line_fails(lark):
@@ -157,7 +162,8 @@ MyClass <T, P> Parent class {
                                                                                                            [Token(
                                                                                                                'NAME',
                                                                                                                'arg')])])])])])])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_class_with_property_declaration_and_assignment(lark):
@@ -189,7 +195,8 @@ MyClass class {
                                                                                                                      'int')]),
                                                                                       Token('VAL', 'val')])])])])])
 
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_abstract_declaration_in_non_abstract_class_fails(lark):

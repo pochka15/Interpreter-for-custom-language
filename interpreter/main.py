@@ -29,21 +29,22 @@ def pretty(snippet: str) -> str:
 
 def main():
     snippet = r"""
-a int val = 1
-b int val = 2
-c int val = a + b
+a ((Hmm<Kek, Lol<Inner1, Inner2>>.What<The, Hell>)) val = 5
 """
 
     lark = initialized_lark_from_file('../grammar.lark')
     parsed_tree = lark.parse(snippet)
+    print(parsed_tree.pretty())
     transformed_tree = TreeTransformer().transform(parsed_tree)
+    assert isinstance(transformed_tree, Tree)
 
-    print(transformed_tree)
     print(transformed_tree.pretty())
-    for tree in transformed_tree.children:
+
+    for tree in transformed_tree.iter_subtrees_topdown():
         if not tree.meta.empty and isinstance(tree, TreeWithLanguageUnit):
-            print("line: " + str(tree.meta.end_line))
-            print("  k" + str(tree.language_unit))
+            print(tree.unit.__class__)
+            print("line:", tree.meta.end_line)
+            print(tree.unit, '\n')
 
 
 if __name__ == "__main__":

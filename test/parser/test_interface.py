@@ -21,7 +21,8 @@ Male <T1, T2> Human interface {
                                                                                 [Token('NAME', 'time'), Tree('type', [
                                                                                     Token('NAME', 'Time')])])]),
                                                                        Token('FUNCTION_RETURN_TYPE', 'bool')])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_interface_with_multiple_function_declarations(lark):
@@ -75,7 +76,8 @@ Male interface {
                                                                                                              Token(
                                                                                                                  'BOOLEAN',
                                                                                                                  'true')])])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_interface_function_declaration_without_return_type(lark):
@@ -124,7 +126,8 @@ Some interface {
                                                                                                                'return'),
                                                                                                          Token('STRING',
                                                                                                                '"kek"')])])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_interface_with_parent_interfaces(lark):
@@ -142,7 +145,8 @@ Other<T, P> Parent1, Parent2 interface {
                                                                       [Token('NAME', 'lol'),
                                                                        Tree('function_parameters', []),
                                                                        Token('FUNCTION_RETURN_TYPE', 'int')])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_while_with_disjunction_expression(lark):
@@ -168,4 +172,5 @@ while ok(mood) || goodWeather(today) {
                                                                                            'function_call_arguments', [
                                                                                                Token('STRING',
                                                                                                      '"Everything will be ok"')])])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes

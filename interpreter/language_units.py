@@ -1,57 +1,58 @@
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Union, Optional
 
-from lark import Tree
+from lark import Tree, Token
 
 
 class TreeWithLanguageUnit(Tree):
-    def __init__(self, tree: Tree, language_unit):
+    def __init__(self, tree: Tree, unit):
         super().__init__(tree.data, tree.children, tree.meta)
-        self.language_unit = language_unit
+        self.unit = unit
 
 
-class TokenWithLanguageUnit:
-    def __init__(self, token, language_unit):
+class TokenAndLanguageUnitPair:
+    def __init__(self, token: Token, unit):
         self.token = token
-        self.language_unit = language_unit
+        self.unit = unit
 
     def __repr__(self):
-        return str(self.language_unit)
+        return str(self.unit)
 
 
-LanguageUnitContainer = Union[TreeWithLanguageUnit, TokenWithLanguageUnit]
+LanguageUnitContainer = Union[TreeWithLanguageUnit, TokenAndLanguageUnitPair]
 
 
 @dataclass
 class VariableDeclaration:
-    variable_name: TokenWithLanguageUnit
-    type_name: TokenWithLanguageUnit
-    is_val: TokenWithLanguageUnit
+    variable_name: TokenAndLanguageUnitPair
+    type_name: Optional[TokenAndLanguageUnitPair]
+    is_val: Optional[TokenAndLanguageUnitPair]
 
     def __repr__(self):
-        s0 = str(self.variable_name.language_unit)
-        s1 = str(self.type_name.language_unit) if self.type_name is not None else ""
-        s2 = "val" if self.is_val else "var"
-        return " ".join([s0, s1, s2])
+        lst = [str(self.variable_name.unit)]
+        if self.type_name is not None:
+            lst.append(str(self.type_name.unit))
+        if self.is_val is not None:
+            lst.append("val" if self.is_val else "var")
+        return " ".join(lst)
 
 
 @dataclass
 class Expression:
-    # TODO(@pochka15): edit
-    simple_literal: TokenWithLanguageUnit
+    disjunction: LanguageUnitContainer
 
     def __str__(self):
-        return str(self.simple_literal.language_unit)
+        return str(self.disjunction.unit)
 
 
 @dataclass
 class Assignment:
     left_expression: TreeWithLanguageUnit
-    operator: TokenWithLanguageUnit
+    operator: TokenAndLanguageUnitPair
     right_expression: LanguageUnitContainer
 
     def __str__(self):
-        return f"{str(self.left_expression.language_unit)} {str(self.operator.language_unit)} {str(self.right_expression.language_unit)}"
+        return f"{str(self.left_expression.unit)} {str(self.operator.unit)} {str(self.right_expression.unit)}"
 
 
 @dataclass
@@ -59,7 +60,7 @@ class IndexingSuffix:
     expression: LanguageUnitContainer
 
     def __str__(self):
-        return "[" + str(self.expression.language_unit) + "]"
+        return "[" + str(self.expression.unit) + "]"
 
 
 @dataclass
@@ -67,27 +68,36 @@ class FunctionCallArguments:
     expressions: List[LanguageUnitContainer]
 
     def __str__(self):
-        return ", ".join(str((ex.language_unit for ex in self.expressions)))
+        return ", ".join(str(ex.unit) for ex in self.expressions)
 
 
 @dataclass
 class NavigationSuffix:
-    nav_path: TokenWithLanguageUnit
+    nav_path: TokenAndLanguageUnitPair
 
     def __str__(self):
-        return "." + str(self.nav_path.language_unit)
+        return "." + str(self.nav_path.unit)
 
 
 @dataclass
 class AdditiveExpression:
-    left_name: TokenWithLanguageUnit
-    operator: TokenWithLanguageUnit
-    right_name: TokenWithLanguageUnit
+    multiplicative_expression: LanguageUnitContainer
+    additive_operators_with_multiplicative_expressions: List[LanguageUnitContainer]
 
     def __str__(self):
-        return f"{str(self.left_name.language_unit)} " \
-               f"{str(self.operator.language_unit)} " \
-               f"{str(self.right_name.language_unit)}"
+        return " ".join([str(self.multiplicative_expression.unit),
+                         " ".join((str(exp.unit) for exp in
+                                   self.additive_operators_with_multiplicative_expressions))])
+
+
+@dataclass
+class PostfixUnaryExpression:
+    primary_expression: LanguageUnitContainer
+    suffixes: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return "".join((str(self.primary_expression),
+                        *(str(suf.unit) for suf in self.suffixes)))
 
 
 @dataclass
@@ -96,14 +106,144 @@ class DirectlyAssignableExpression:
     assignable_suffix: LanguageUnitContainer
 
     def __str__(self):
-        return f"{self.postfix_unary_expression.language_unit}{self.assignable_suffix.language_unit}"
+        return f"{self.postfix_unary_expression.unit}{self.assignable_suffix.unit}"
+
+
+@dataclass
+class CallSuffix:
+    type_arguments: Optional[LanguageUnitContainer]
+    function_call_arguments: LanguageUnitContainer
+
+    def __str__(self):
+        t = "<" + str(self.type_arguments) + ">" if self.type_arguments is not None else ""
+        return t + "(" + str(self.function_call_arguments.unit) + ")"
 
 
 @dataclass
 class PrefixUnaryExpression:
-    prefix_operators: List[TokenWithLanguageUnit]
+    prefix_operators: List[TokenAndLanguageUnitPair]
     postfix_unary_expression: LanguageUnitContainer
 
     def __str__(self):
-        return "".join(str(op.language_unit) for op in self.prefix_operators) + str(
-            self.postfix_unary_expression.language_unit)
+        return "".join(str(op.unit) for op in self.prefix_operators) + \
+               str(self.postfix_unary_expression.unit)
+
+
+@dataclass
+class Disjunction:
+    conjunctions: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return " || ".join(str(con.unit) for con in self.conjunctions)
+
+
+@dataclass
+class Conjunction:
+    equalities: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return " && ".join(str(eq.unit) for eq in self.equalities)
+
+
+@dataclass
+class Equality:
+    comparison: LanguageUnitContainer
+    equality_operators_and_comparisons: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return " ".join([str(self.comparison.unit),
+                         *(str(ec.unit) for ec in self.equality_operators_and_comparisons)])
+
+
+@dataclass
+class Comparison:
+    additive_expression: LanguageUnitContainer
+    comparison_operators_and_additive_expressions: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return str(self.additive_expression.unit) \
+               + " ".join(str(ca.unit) for ca in self.comparison_operators_and_additive_expressions)
+
+
+@dataclass()
+class ImportWithoutFrom:
+    as_names: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return "import " + ", ".join(str(as_name.unit) for as_name in self.as_names)
+
+
+@dataclass
+class ImportWithFrom:
+    from_path: LanguageUnitContainer
+    import_targets: LanguageUnitContainer
+
+    def __str__(self):
+        return "from " + str(self.from_path.unit) + " import " + str(self.import_targets.unit)
+
+
+@dataclass
+class FromPath:
+    relative_location: Optional[TokenAndLanguageUnitPair]
+    path: List[TokenAndLanguageUnitPair]
+
+    def __str__(self):
+        beg = self.relative_location.unit if self.relative_location is not None else ""
+        return beg + ".".join(str(p.unit) for p in self.path)
+
+
+@dataclass
+class ImportTargets:
+    as_names: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return ", ".join(str(name.unit) for name in self.as_names)
+
+
+@dataclass
+class AsName:
+    name: TokenAndLanguageUnitPair
+    alias: TokenAndLanguageUnitPair
+
+    def __str__(self):
+        return str(self.name.unit) + " as " + str(self.alias.unit)
+
+
+@dataclass
+class MultiplicativeExpression:
+    prefix_unary_expression: LanguageUnitContainer
+    multiplicative_operators_and_prefix_unary_expressions: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return " ".join([str(self.prefix_unary_expression.unit),
+                         *(str(el.unit) for el in self.multiplicative_operators_and_prefix_unary_expressions)])
+
+
+@dataclass
+class TypeArguments:
+    comma_separated_types: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return "<" + ", ".join(str(t.unit) for t in self.comma_separated_types) + ">"
+
+
+@dataclass
+class SimpleUserType:
+    name: TokenAndLanguageUnitPair
+    type_arguments: Optional[LanguageUnitContainer]
+
+    def __str__(self):
+        second_part = f"{str(self.type_arguments.unit)}" if self.type_arguments is not None else ""
+        return str(self.name.unit) + second_part
+
+
+@dataclass
+class Type:
+    simple_user_types: List[LanguageUnitContainer]
+    is_parenthesized: bool
+
+    def __str__(self):
+        inner = ".".join(str(t.unit) for t in self.simple_user_types)
+        if self.is_parenthesized:
+            return "(" + inner + ")"
+        return inner

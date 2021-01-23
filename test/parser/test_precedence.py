@@ -16,7 +16,8 @@ def test_prefix_postfix_precedence(lark):
                                                                                                Tree(
                                                                                                    'function_call_arguments',
                                                                                                    [])])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_suffixes_precedence(lark):
@@ -36,50 +37,50 @@ a int val = items[0].value() """
                                                                                       Tree('function_call_arguments',
                                                                                            [])])])]), Tree('assignment',
                                                                                                            [Tree(
-                                                                                                               'directly_assignable_expression',
-                                                                                                               [Tree(
-                                                                                                                   'variable_declaration',
+                                                                                                               'variable_declaration',
+                                                                                                               [
+                                                                                                                   Token(
+                                                                                                                       'NAME',
+                                                                                                                       'a'),
+                                                                                                                   Tree(
+                                                                                                                       'type',
+                                                                                                                       [
+                                                                                                                           Token(
+                                                                                                                               'NAME',
+                                                                                                                               'int')]),
+                                                                                                                   Token(
+                                                                                                                       'VAL',
+                                                                                                                       'val')]),
+                                                                                                               Token(
+                                                                                                                   'ASSIGNMENT_OPERATOR',
+                                                                                                                   '='),
+                                                                                                               Tree(
+                                                                                                                   'postfix_unary_expression',
                                                                                                                    [
                                                                                                                        Token(
                                                                                                                            'NAME',
-                                                                                                                           'a'),
+                                                                                                                           'items'),
                                                                                                                        Tree(
-                                                                                                                           'type',
+                                                                                                                           'indexing_suffix',
+                                                                                                                           [
+                                                                                                                               Token(
+                                                                                                                                   'DEC_NUMBER',
+                                                                                                                                   '0')]),
+                                                                                                                       Tree(
+                                                                                                                           'navigation_suffix',
                                                                                                                            [
                                                                                                                                Token(
                                                                                                                                    'NAME',
-                                                                                                                                   'int')]),
-                                                                                                                       Token(
-                                                                                                                           'VAL',
-                                                                                                                           'val')])]),
-                                                                                                            Token(
-                                                                                                                'ASSIGNMENT_OPERATOR',
-                                                                                                                '='),
-                                                                                                            Tree(
-                                                                                                                'postfix_unary_expression',
-                                                                                                                [Token(
-                                                                                                                    'NAME',
-                                                                                                                    'items'),
-                                                                                                                 Tree(
-                                                                                                                     'indexing_suffix',
-                                                                                                                     [
-                                                                                                                         Token(
-                                                                                                                             'DEC_NUMBER',
-                                                                                                                             '0')]),
-                                                                                                                 Tree(
-                                                                                                                     'navigation_suffix',
-                                                                                                                     [
-                                                                                                                         Token(
-                                                                                                                             'NAME',
-                                                                                                                             'value')]),
-                                                                                                                 Tree(
-                                                                                                                     'call_suffix',
-                                                                                                                     [
-                                                                                                                         Tree(
-                                                                                                                             'function_call_arguments',
-                                                                                                                             [])])])])])
+                                                                                                                                   'value')]),
+                                                                                                                       Tree(
+                                                                                                                           'call_suffix',
+                                                                                                                           [
+                                                                                                                               Tree(
+                                                                                                                                   'function_call_arguments',
+                                                                                                                                   [])])])])])
 
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_disjunction_with_conjunction(lark):
@@ -110,7 +111,8 @@ def test_disjunction_with_conjunction(lark):
                                                                                   'function_call_arguments',
                                                                                   [])])])])])]
                     )
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_conjunction_and_parentheses(lark):
@@ -118,9 +120,9 @@ def test_conjunction_and_parentheses(lark):
     x int val = leftTasksNumber < 5 && (shouldWorkToday() || shouldWorkTomorrow())
     """
     actual = lark.parse(snippet)
-    expected = Tree('start', [Tree('assignment', [Tree('directly_assignable_expression', [
-        Tree('variable_declaration', [Token('NAME', 'x'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')])]),
-                                                  Token('ASSIGNMENT_OPERATOR', '='), Tree('conjunction', [
+    expected = Tree('start', [Tree('assignment', [
+        Tree('variable_declaration', [Token('NAME', 'x'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')]),
+        Token('ASSIGNMENT_OPERATOR', '='), Tree('conjunction', [
             Tree('comparison',
                  [Token('NAME', 'leftTasksNumber'), Token('COMPARISON_OPERATOR', '<'), Token('DEC_NUMBER', '5')]),
             Tree('disjunction', [Tree('postfix_unary_expression', [Token('NAME', 'shouldWorkToday'), Tree('call_suffix',
@@ -131,7 +133,8 @@ def test_conjunction_and_parentheses(lark):
                                                                    Tree('call_suffix',
                                                                         [Tree('function_call_arguments', [])])])])])])])
 
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_expression_with_multiple_prefixes(lark):
@@ -149,7 +152,8 @@ def test_expression_with_multiple_prefixes(lark):
                                                   Tree('prefix_unary_expression',
                                                        [Token('PREFIX_OPERATOR', '!'), Token('NAME', 'd')])])])
     print(actual.pretty())
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_assignment_and_operator(lark):
@@ -173,7 +177,8 @@ def test_comparison_operators_in_a_row(lark):
                                                        [Token('NAME', 'b'), Token('ADDITIVE_OPERATOR', '+'),
                                                         Token('DEC_NUMBER', '3')]), Token('COMPARISON_OPERATOR', '<'),
                                                   Token('NAME', 'c')])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_immediately_called_if_expression(lark):
@@ -186,7 +191,8 @@ def test_immediately_called_if_expression(lark):
         Tree('statements_block', [Tree('jump_statement', [Token('RETURN', 'return'), Token('NAME', 'b')])])]),
                                                                 Tree('call_suffix',
                                                                      [Tree('function_call_arguments', [])])])])
-    compare_trees(expected, actual)
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
 
 
 def test_navigation_suffix_on_next_line(lark):
@@ -194,19 +200,20 @@ def test_navigation_suffix_on_next_line(lark):
 hello()
 k val = 5"""
     actual = lark.parse(snippet)
-    expected = Tree('start', [Tree('assignment', [Tree('directly_assignable_expression', [
-        Tree('variable_declaration', [Token('NAME', 'a'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')])]),
-                                                  Token('ASSIGNMENT_OPERATOR', '='), Tree('postfix_unary_expression',
-                                                                                          [Token('NAME', 'items'),
-                                                                                           Tree('indexing_suffix', [
-                                                                                               Token('DEC_NUMBER',
-                                                                                                     '0')]),
-                                                                                           Tree('navigation_suffix', [
-                                                                                               Token('NAME', 'hello')]),
-                                                                                           Tree('call_suffix', [Tree(
-                                                                                               'function_call_arguments',
-                                                                                               [])])])]),
-                              Tree('assignment', [Tree('directly_assignable_expression', [
-                                  Tree('variable_declaration', [Token('NAME', 'k'), Token('VAL', 'val')])]),
-                                                  Token('ASSIGNMENT_OPERATOR', '='), Token('DEC_NUMBER', '5')])])
-    compare_trees(expected, actual)
+    expected = Tree('start', [Tree('assignment', [
+        Tree('variable_declaration', [Token('NAME', 'a'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')]),
+        Token('ASSIGNMENT_OPERATOR', '='), Tree('postfix_unary_expression',
+                                                [Token('NAME', 'items'),
+                                                 Tree('indexing_suffix', [
+                                                     Token('DEC_NUMBER',
+                                                           '0')]),
+                                                 Tree('navigation_suffix', [
+                                                     Token('NAME', 'hello')]),
+                                                 Tree('call_suffix', [Tree(
+                                                     'function_call_arguments',
+                                                     [])])])]),
+                              Tree('assignment',
+                                   [Tree('variable_declaration', [Token('NAME', 'k'), Token('VAL', 'val')]),
+                                    Token('ASSIGNMENT_OPERATOR', '='), Token('DEC_NUMBER', '5')])])
+    result, mes = trees_comparison_result(expected, actual)
+    assert result, mes
