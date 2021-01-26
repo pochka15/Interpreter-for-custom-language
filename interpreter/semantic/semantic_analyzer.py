@@ -23,7 +23,7 @@ class SemanticAnalyzer(Interpreter):
         self.scopes.append(root_scope)
         self.current_scope = root_scope
         t = TreeWithLanguageUnit(Tree('function_declaration', []), FunctionDeclaration('print', 'void'))
-        self.current_scope.put(with_added_unit_description(t, UnitWithTypeDs(t.unit.name, t.unit.return_type)))
+        self.current_scope.put(with_added_unit_description(t, CallableDs(t.unit.name,[UnitWithTypeDs('some', 'str')],  t.unit.return_type)))
 
     def BLOCK_END(self, _: LanguageUnitContainer):
         self.current_scope = self.current_scope.enclosing_scope
@@ -39,11 +39,11 @@ class SemanticAnalyzer(Interpreter):
         elif isinstance(pair.unit, Identifier):
             pair.token.type == "NAME"
             searched_symbol_name: str = str(pair.unit)
-            found_declaration = self.current_scope.find_declaration(searched_symbol_name)
+            found_declaration = self.current_scope.find_declared_node(searched_symbol_name)
             if found_declaration is None:
                 # TODO(@pochka15): test
                 raise_declaration_is_not_found(searched_symbol_name, pair)
-            self.current_scope.put(with_added_unit_description(pair, found_declaration))
+            self.current_scope.put(with_added_unit_description(pair, found_declaration.unit.description))
         elif isinstance(pair.unit, int):
             pair.token.type == "DEC_NUMBER"
         elif isinstance(pair.unit, float):
@@ -60,8 +60,8 @@ class SemanticAnalyzer(Interpreter):
         self.visit(node.unit.function_call_arguments)
 
     def function_call_arguments(self, node: TreeWithLanguageUnit):
-        for child in node.children:
-            self.visit(child)
+        # for each expression check if it's ok
+        self.visit_primary_expression_node(node.unit.expressions[0])
 
     def postfix_unary_expression(self, node: TreeWithLanguageUnit):
         def check_suffix_can_be_applied(description, suffix):
@@ -70,15 +70,15 @@ class SemanticAnalyzer(Interpreter):
             # Here I take a list of expressions and compare them with formal parameters
             check_formal_actual_parameters_match(
                 description.formal_parameters,
-                extract_unit(suffix, "function_call_arguments").expressions)
+                suffix.function_call_arguments.unit.expressions)
 
         primary_expression_token = node.unit.primary_expression
         self.visit_primary_expression_node(primary_expression_token)
         current_description: CallableDs = primary_expression_token.unit.description
         current_type = None
-        for suffix in extracted_list_units(node, "suffixes"):
-            self.visit(suffix)
-            check_suffix_can_be_applied(current_description, suffix)
+        for suffix_node in node.unit.suffixes:
+            self.visit(suffix_node)
+            check_suffix_can_be_applied(current_description, suffix_node.unit)
             current_type = current_description.return_type
         assert current_type is not None
         self.current_scope.put(

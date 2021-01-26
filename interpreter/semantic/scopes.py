@@ -45,7 +45,7 @@ class Scope:
     def put(self, node: DescribedUnitContainer):
         self.declarations[node.unit.description.name] = node
 
-    def find_declaration(self, declaration_name, current_scope_only=False) -> Optional[DescribedUnitContainer]:
+    def find_declared_node(self, declaration_name, current_scope_only=False) -> Optional[DescribedUnitContainer]:
         found = self.declarations.get(declaration_name)
         if found is not None:
             return found
@@ -55,4 +55,4 @@ class Scope:
 
         # recursively go up the chain and lookup the name
         if self.enclosing_scope is not None:
-            return self.enclosing_scope.find_declaration(declaration_name)
+            return self.enclosing_scope.find_declared_node(declaration_name)

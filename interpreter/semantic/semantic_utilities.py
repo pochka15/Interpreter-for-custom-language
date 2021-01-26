@@ -42,7 +42,7 @@ def check_type_exists(type_name: str, scope: Scope, node_containing_type: Descri
     for t in builtin_types:
         if t == type_name:
             return
-    found_type = scope.find_declaration(type_name)
+    found_type = scope.find_declared_node(type_name)
     if found_type is None:
         line, column = extracted_meta(node_containing_type)
         raise Exception(f"In line [{line}:{column}]: {str(node_containing_type.unit)}\n"
@@ -50,7 +50,7 @@ def check_type_exists(type_name: str, scope: Scope, node_containing_type: Descri
 
 
 def check_declaration_doesnt_exist(name: str, scope: Scope, node_containing_declaration: DescribedUnitContainer):
-    found_declaration = scope.find_declaration(name)
+    found_declaration = scope.find_declared_node(name)
     if found_declaration is not None:
         line, column = extracted_meta(node_containing_declaration)
         raise Exception(f"In line [{line}:{column}]: {str(node_containing_declaration.unit)}\n"
