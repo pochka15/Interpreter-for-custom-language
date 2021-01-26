@@ -1,21 +1,8 @@
-from collections import Iterable
 from typing import Iterator
 
 from language_units import *
+from semantic.semantic_analyzer import extract_unit, extracted_list_units
 from test.language_units.utilities import *
-
-
-def extract_unit(tree, *path_to_target_attribute):
-    """Extract unit recursively using the given attributes"""
-    for at in path_to_target_attribute:
-        tree = getattr(tree.unit, at)
-    return tree.unit
-
-
-def extracted_list_units(unit, list_attribute_name):
-    lst = getattr(unit, list_attribute_name)
-    for elem in lst:
-        yield elem.unit
 
 
 def parse_find_transform(lark: Lark, snippet: str, tree_data) -> Iterator:
@@ -93,8 +80,8 @@ def test_postfix_unary_expression(lark):
     snippet = "a()(1)"
     root = next(parse_find_transform(lark, snippet, "postfix_unary_expression"))
     assert str(root.unit) == "a()(1)"
-    primary_expression = extract_unit(root, "primary_expression")
-    assert primary_expression == "a"
+    identifier = extract_unit(root, "primary_expression")
+    assert str(identifier) == "a"
     expected = ('()', "(1)")
     for exp, act in zip(expected, extracted_list_units(root.unit, "suffixes")):
         assert exp == str(act)

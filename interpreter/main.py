@@ -4,7 +4,8 @@ from lark import Lark, Tree
 from lark.lexer import Token
 
 from code_snippet_generation import with_bold_keywords, with_italic_comments, with_this_keyword_in_bold, with_pre_tag
-from language_units import TreeWithLanguageUnit
+from interpretation.custom_interpreter import CustomInterpreter
+from semantic.semantic_analyzer import SemanticAnalyzer
 from tree_transformer import TreeTransformer
 
 
@@ -29,22 +30,20 @@ def pretty(snippet: str) -> str:
 
 def main():
     snippet = r"""
-a ((Hmm<Kek, Lol<Inner1, Inner2>>.What<The, Hell>)) val = 5
+a int val = 5
+b bool = True
+print(a)
 """
-
     lark = initialized_lark_from_file('../grammar.lark')
     parsed_tree = lark.parse(snippet)
-    print(parsed_tree.pretty())
-    transformed_tree = TreeTransformer().transform(parsed_tree)
-    assert isinstance(transformed_tree, Tree)
-
-    print(transformed_tree.pretty())
-
-    for tree in transformed_tree.iter_subtrees_topdown():
-        if not tree.meta.empty and isinstance(tree, TreeWithLanguageUnit):
-            print(tree.unit.__class__)
-            print("line:", tree.meta.end_line)
-            print(tree.unit, '\n')
+    transformed_tree: Tree = TreeTransformer().transform(parsed_tree)
+    scopes = []
+    SemanticAnalyzer(scopes).visit(transformed_tree)
+    CustomInterpreter().visit(transformed_tree)
+    # Printing
+    for scope in scopes:
+        print(scope)
+    # print(transformed_tree.pretty())
 
 
 if __name__ == "__main__":

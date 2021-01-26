@@ -1,39 +1,46 @@
 from dataclasses import dataclass
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Any
 
 from lark import Tree, Token
 
 
 class TreeWithLanguageUnit(Tree):
-    def __init__(self, tree: Tree, unit):
+    def __init__(self, tree: Tree, unit: Any):
         super().__init__(tree.data, tree.children, tree.meta)
         self.unit = unit
 
 
-class TokenAndLanguageUnitPair:
-    def __init__(self, token: Token, unit):
-        self.token = token
-        self.unit = unit
+@dataclass
+class TokenAndLanguageUnit:
+    token: Token
+    unit: Any
 
     def __repr__(self):
         return str(self.unit)
 
 
-LanguageUnitContainer = Union[TreeWithLanguageUnit, TokenAndLanguageUnitPair]
+LanguageUnitContainer = Union[TreeWithLanguageUnit, TokenAndLanguageUnit]
+
+
+@dataclass
+class Identifier:
+    name: str
+
+    def __str__(self):
+        return self.name
 
 
 @dataclass
 class VariableDeclaration:
-    variable_name: TokenAndLanguageUnitPair
-    type_name: Optional[TokenAndLanguageUnitPair]
-    is_val: Optional[TokenAndLanguageUnitPair]
+    variable_name: TokenAndLanguageUnit
+    type_name: Optional[TokenAndLanguageUnit]
+    is_val: bool = True
 
     def __repr__(self):
         lst = [str(self.variable_name.unit)]
         if self.type_name is not None:
             lst.append(str(self.type_name.unit))
-        if self.is_val is not None:
-            lst.append("val" if self.is_val else "var")
+        lst.append("val" if self.is_val else "var")
         return " ".join(lst)
 
 
@@ -48,7 +55,7 @@ class Expression:
 @dataclass
 class Assignment:
     left_expression: TreeWithLanguageUnit
-    operator: TokenAndLanguageUnitPair
+    operator: TokenAndLanguageUnit
     right_expression: LanguageUnitContainer
 
     def __str__(self):
@@ -73,7 +80,7 @@ class FunctionCallArguments:
 
 @dataclass
 class NavigationSuffix:
-    nav_path: TokenAndLanguageUnitPair
+    nav_path: TokenAndLanguageUnit
 
     def __str__(self):
         return "." + str(self.nav_path.unit)
@@ -110,6 +117,14 @@ class DirectlyAssignableExpression:
 
 
 @dataclass
+# TODO(@pochka15):
+class FunctionDeclaration:
+# function_declaration: NAME type_arguments? function_parameters VISIBILITY_MODIFIER? OVERRIDDEN? FUNCTION_RETURN_TYPE? "{" statements_block "}"
+    name: str
+    return_type: str
+
+
+@dataclass
 class CallSuffix:
     type_arguments: Optional[LanguageUnitContainer]
     function_call_arguments: LanguageUnitContainer
@@ -121,7 +136,7 @@ class CallSuffix:
 
 @dataclass
 class PrefixUnaryExpression:
-    prefix_operators: List[TokenAndLanguageUnitPair]
+    prefix_operators: List[TokenAndLanguageUnit]
     postfix_unary_expression: LanguageUnitContainer
 
     def __str__(self):
@@ -184,8 +199,8 @@ class ImportWithFrom:
 
 @dataclass
 class FromPath:
-    relative_location: Optional[TokenAndLanguageUnitPair]
-    path: List[TokenAndLanguageUnitPair]
+    relative_location: Optional[TokenAndLanguageUnit]
+    path: List[TokenAndLanguageUnit]
 
     def __str__(self):
         beg = self.relative_location.unit if self.relative_location is not None else ""
@@ -202,8 +217,8 @@ class ImportTargets:
 
 @dataclass
 class AsName:
-    name: TokenAndLanguageUnitPair
-    alias: TokenAndLanguageUnitPair
+    name: TokenAndLanguageUnit
+    alias: TokenAndLanguageUnit
 
     def __str__(self):
         return str(self.name.unit) + " as " + str(self.alias.unit)
@@ -229,7 +244,7 @@ class TypeArguments:
 
 @dataclass
 class SimpleUserType:
-    name: TokenAndLanguageUnitPair
+    name: TokenAndLanguageUnit
     type_arguments: Optional[LanguageUnitContainer]
 
     def __str__(self):

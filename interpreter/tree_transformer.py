@@ -1,8 +1,4 @@
-from functools import partial
-from operator import itemgetter
-from typing import Iterable, Iterator
-
-from lark import Transformer, Tree, Token, v_args
+from lark import Transformer, v_args
 
 from language_units import *
 
@@ -19,7 +15,7 @@ def identity(x):
 
 
 def wrapped_token(applied_func=lambda x: x):
-    return lambda _, token: TokenAndLanguageUnitPair(token, applied_func(token.value))
+    return lambda _, token: TokenAndLanguageUnit(token, applied_func(token.value))
 
 
 def wrapped_tree(container, children_lambda=identity):
@@ -35,21 +31,27 @@ class TreeTransformer(Transformer):
         super().__init__(visit_tokens=True)
 
     # ADDITIVE_OPERATOR
-    # NAME
     # PREFIX_OPERATOR
     # ASSIGNMENT_AND_OPERATOR
     # ASSIGNMENT_OPERATOR
     __default_token__ = wrapped_token()
 
+    FLOAT_NUMBER = wrapped_token(float)
     DEC_NUMBER = wrapped_token(int)
+    BOOLEAN = wrapped_token(lambda bool_str: bool(bool_str.upper()))
+
+    # TODO(@pochka15): check if it works
+    # def NAME(self, token: Token):
+    #     return TokenAndLanguageUnit(token, Identifier(token.value))
+    NAME = wrapped_token(Identifier)
 
     def VAR(self, token: Token):
-        token.update("IS_VAL", token.value)
-        return wrapped_token(is_val)(self, token)
+        # token.update("IS_VAL", token.value)
+        return is_val(token.value)
 
     def VAL(self, token: Token):
-        token.update("IS_VAL", token.value)
-        return wrapped_token(is_val)(self, token)
+        # token.update("IS_VAL", token.value)
+        return is_val(token.value)
 
     def statements_block(self, block_tree: Tree):
         block_tree.children.append(Token('BLOCK_END', ''))
@@ -57,7 +59,6 @@ class TreeTransformer(Transformer):
 
     indexing_suffix = wrapped_tree(IndexingSuffix)
     directly_assignable_expression = wrapped_tree(DirectlyAssignableExpression)
-    variable_declaration = wrapped_tree(VariableDeclaration)
     expression = wrapped_tree(Expression)
     assignment = wrapped_tree(Assignment)
     disjunction = wrapped_tree(Disjunction, lambda children: tuple([children]))
@@ -65,6 +66,7 @@ class TreeTransformer(Transformer):
     equality = wrapped_tree(Equality, lambda children: (children[0], children[1: len(children)]))
     import_with_from = wrapped_tree(ImportWithFrom)
     as_name = wrapped_tree(AsName)
+    variable_declaration = wrapped_tree(VariableDeclaration)
     function_call_arguments = wrapped_tree(FunctionCallArguments, lambda children: tuple([children]))
     import_targets = wrapped_tree(ImportTargets, lambda children: tuple([children]))
     type_arguments = wrapped_tree(TypeArguments, lambda children: tuple([children]))
@@ -91,7 +93,7 @@ class TreeTransformer(Transformer):
     def from_path(self, tree: Tree) -> TreeWithLanguageUnit:
         children = tree.children
         pair = children[0]
-        if isinstance(pair, TokenAndLanguageUnitPair) \
+        if isinstance(pair, TokenAndLanguageUnit) \
                 and pair.token.type == "RELATIVE_LOCATION":
             relative_location = pair
             starting_ind = 1
@@ -118,4 +120,3 @@ class TreeTransformer(Transformer):
             first.unit.is_parenthesized = True
             return first
         return TreeWithLanguageUnit(tree, Type(children, False))
-
