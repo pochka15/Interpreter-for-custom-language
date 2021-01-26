@@ -23,6 +23,53 @@ LanguageUnitContainer = Union[TreeWithLanguageUnit, TokenAndLanguageUnit]
 
 
 @dataclass
+class BuiltinUnit:
+    str_representation: str
+
+    def __str__(self):
+        return self.str_representation
+
+@dataclass
+class AdditiveOperator:
+    value: str
+
+    def __str__(self):
+        return self.value
+
+
+@dataclass
+class String:
+    value: str
+
+    def __str__(self):
+        return self.value
+
+
+@dataclass
+class Int:
+    value: int
+
+    def __str__(self):
+        return str(self.value)
+
+
+@dataclass
+class Float:
+    value: float
+
+    def __str__(self):
+        return str(self.value)
+
+
+@dataclass
+class Bool:
+    value: bool
+
+    def __str__(self):
+        return "true" if self.value else "false"
+
+
+@dataclass
 class Identifier:
     name: str
 
@@ -33,15 +80,11 @@ class Identifier:
 @dataclass
 class VariableDeclaration:
     variable_name: TokenAndLanguageUnit
-    type_name: Optional[TokenAndLanguageUnit]
-    is_val: bool = True
+    type: TokenAndLanguageUnit
+    var_or_val: TokenAndLanguageUnit
 
     def __repr__(self):
-        lst = [str(self.variable_name.unit)]
-        if self.type_name is not None:
-            lst.append(str(self.type_name.unit))
-        lst.append("val" if self.is_val else "var")
-        return " ".join(lst)
+        return " ".join([str(self.variable_name.unit), str(self.type.unit), str(self.var_or_val.unit)])
 
 
 @dataclass
@@ -116,12 +159,62 @@ class DirectlyAssignableExpression:
         return f"{self.postfix_unary_expression.unit}{self.assignable_suffix.unit}"
 
 
+@dataclass()
+class IsVal:
+    value: bool
+
+    def __str__(self):
+        return "val" if self.value else "var"
+
+
 @dataclass
-# TODO(@pochka15):
-class FunctionDeclaration:
-# function_declaration: NAME type_arguments? function_parameters VISIBILITY_MODIFIER? OVERRIDDEN? FUNCTION_RETURN_TYPE? "{" statements_block "}"
+class TypeArguments:
+    comma_separated_types: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return "<" + ", ".join(str(t.unit) for t in self.comma_separated_types) + ">"
+
+
+@dataclass
+class FunctionParameter:
     name: str
-    return_type: str
+    type: LanguageUnitContainer
+    val_or_var: TokenAndLanguageUnit
+
+    def __str__(self):
+        return f"{self.name} {str(self.type.unit)} {str(self.val_or_var)}"
+
+
+@dataclass
+class FunctionParameters:
+    parameters: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return ", ".join(str(p.unit) for p in self.parameters)
+
+
+@dataclass
+class StatementsBlock:
+    statements: List[LanguageUnitContainer]
+
+    def __str__(self):
+        return "\n".join(str(st.unit) for st in self.statements)
+
+
+# TODO(@pochka15): test
+@dataclass
+class FunctionDeclaration:
+    name: str
+    return_type: LanguageUnitContainer
+    function_parameters: LanguageUnitContainer
+    type_arguments: Optional[LanguageUnitContainer]
+    statements_block: LanguageUnitContainer
+
+    # TODO(@pochka15): add optional visibility modifier
+
+    def __str__(self):
+        return self.name + "(" + str(self.function_parameters.unit) + ")" + \
+               str(self.return_type.unit) + " {\n" + str(self.statements_block.unit) + "\n}"
 
 
 @dataclass
@@ -232,14 +325,6 @@ class MultiplicativeExpression:
     def __str__(self):
         return " ".join([str(self.prefix_unary_expression.unit),
                          *(str(el.unit) for el in self.multiplicative_operators_and_prefix_unary_expressions)])
-
-
-@dataclass
-class TypeArguments:
-    comma_separated_types: List[LanguageUnitContainer]
-
-    def __str__(self):
-        return "<" + ", ".join(str(t.unit) for t in self.comma_separated_types) + ">"
 
 
 @dataclass

@@ -1,18 +1,48 @@
-from typing import List
+from typing import Union
 
 from lark import Tree
 from lark.visitors import Interpreter
 
-from language_units import Type, CallSuffix, Identifier, FunctionDeclaration
-from semantic.scopes import DescribedUnitContainer
+from language_units import CallSuffix, Identifier, BuiltinUnit, String, Bool, Float, Int
 from semantic.semantic_utilities import *
 from semantic.unit_descriptions import *
 
 
-def with_added_unit_description(node: LanguageUnitContainer,
-                                description: UnitDescription) -> DescribedUnitContainer:
-    node.unit.description = description
-    return node
+def add_unit_description(container: LanguageUnitContainer,
+                         description: UnitDescription) -> DescribedUnitContainer:
+    container.unit.description = description
+    return container
+
+
+int_int_sum_operator_ds = OperatorDs('+', 'int', 'int', 'int', lambda x, y: x + y)
+
+int_int_sub_operator_ds = OperatorDs('-', 'int', 'int', 'int', lambda x, y: x - y)
+
+
+def builtin_nodes():
+    print_description = CallableDs('print', 'str', [UnitWithTypeDs('param', 'str')], 'void', print)
+    print_tree = TreeWithLanguageUnit(Tree('builtin_function', []), BuiltinUnit(str(print_description)))
+
+    print2_description = CallableDs('print2', 'int', [UnitWithTypeDs('param', 'int')], 'void', print)
+    print2_tree = TreeWithLanguageUnit(Tree('builtin_function', []), BuiltinUnit(str(print2_description)))
+
+    int_int_sum_tree = TreeWithLanguageUnit(Tree('builtin_operator', []), BuiltinUnit(str(int_int_sum_operator_ds)))
+
+    int_int_sub_tree = TreeWithLanguageUnit(Tree('builtin_operator', []), BuiltinUnit(str(int_int_sub_operator_ds)))
+    nodes = [(add_unit_description(print_tree, print_description), print_description.name),
+             (add_unit_description(int_int_sum_tree, int_int_sub_operator_ds),
+              generate_name_of_operator_func(
+                  int_int_sum_operator_ds.name,
+                  int_int_sum_operator_ds.left_expr_type,
+                  int_int_sum_operator_ds.right_expr_type)),
+             (add_unit_description(int_int_sub_tree, int_int_sub_operator_ds),
+              generate_name_of_operator_func(
+                  int_int_sub_operator_ds.name,
+                  int_int_sub_operator_ds.left_expr_type,
+                  int_int_sub_operator_ds.right_expr_type)),
+             (add_unit_description(print2_tree, print2_description), print2_description.name)]
+    for node, name in nodes:
+        yield node, name
 
 
 class SemanticAnalyzer(Interpreter):
@@ -22,38 +52,76 @@ class SemanticAnalyzer(Interpreter):
         root_scope = Scope(None)
         self.scopes.append(root_scope)
         self.current_scope = root_scope
-        t = TreeWithLanguageUnit(Tree('function_declaration', []), FunctionDeclaration('print', 'void'))
-        self.current_scope.put(with_added_unit_description(t, CallableDs(t.unit.name,[UnitWithTypeDs('some', 'str')],  t.unit.return_type)))
+        # TODO(@pochka15):check
+        for (node, name) in builtin_nodes():
+            self.current_scope.put(node, name)
 
-    def BLOCK_END(self, _: LanguageUnitContainer):
-        self.current_scope = self.current_scope.enclosing_scope
+    def start(self, node):
+        return self.visit_children(node)
 
-    def visit_primary_expression_node(self, pair: TokenAndLanguageUnit):
-        # TODO(@pochka15): add symbols
-        if isinstance(pair.unit, str):
-            pair.token.type == "STRING"
-            pass
-        elif isinstance(pair.unit, bool):
-            pair.token.type == "BOOLEAN"
-            pass
-        elif isinstance(pair.unit, Identifier):
-            pair.token.type == "NAME"
-            searched_symbol_name: str = str(pair.unit)
+    def visit(self, node):
+        if isinstance(node, Tree) and node.data == 'start':
+            return self.visit_children(node)
+        unit = node.unit
+        if isinstance(unit, String):
+            add_unit_description(node, UnitWithTypeDs(str(unit), 'str'))
+        elif isinstance(unit, Bool):
+            add_unit_description(node, UnitWithTypeDs(str(unit), 'bool'))
+        elif isinstance(unit, Float):
+            add_unit_description(node, UnitWithTypeDs(str(unit), 'float'))
+        elif isinstance(unit, Int):
+            add_unit_description(node, UnitWithTypeDs(str(unit), 'int'))
+        elif isinstance(node.unit, Identifier):
+            searched_symbol_name: str = str(node.unit)
+            # TODO(@pochka15): find the function declaration properly
+            # try_to_find_function_declaration()
             found_declaration = self.current_scope.find_declared_node(searched_symbol_name)
             if found_declaration is None:
                 # TODO(@pochka15): test
-                raise_declaration_is_not_found(searched_symbol_name, pair)
-            self.current_scope.put(with_added_unit_description(pair, found_declaration.unit.description))
-        elif isinstance(pair.unit, int):
-            pair.token.type == "DEC_NUMBER"
-        elif isinstance(pair.unit, float):
-            pair.token.type == "FLOAT_NUMBER"
+                raise_declaration_is_not_found(searched_symbol_name, node)
+            found_unit_description = found_declaration.unit.description
+            if isinstance(found_unit_description, UnitWithTypeDs):
+                id_type = found_unit_description.type
+            else:
+                raise Exception("Unknown type of the found declaration: " + str(found_declaration.unit))
+            add_unit_description(node, IdentifierDs(str(node.unit), id_type, found_declaration))
+        else:
+            return super().visit(node)
 
+    def additive_expression(self, node: TreeWithLanguageUnit):
+        def bound_func():
+            print("TODO(@pochka15):")
 
-    # def statements_block(self, node: LanguageUnitContainer):
-    #     new_scope = Scope(self.current_scope)
-    #     self.current_scope = new_scope
-    #     self.scopes.append(new_scope)
+        first_expr_node = node.unit.multiplicative_expression
+        self.visit(first_expr_node)
+        # TODO(@pochka15): remove the assumption that all the types must be equal to the first_expr_node type
+        op_and_expr_iter = iter(node.unit.additive_operators_with_multiplicative_expressions)
+        prev_expr_node = first_expr_node
+        for op_node in op_and_expr_iter:
+            next_expr_node = next(op_and_expr_iter)
+            self.visit(next_expr_node)
+            found_node = try_to_find_appropriate_operator_node(
+                prev_expr_node, next_expr_node, str(op_node.unit), self.current_scope)
+            op_node.unit.description = found_node.unit.description
+            prev_expr_node = next_expr_node
+        assert op_node is not None
+        ds = AdditiveExpressionDs(str(node.unit), op_node.unit.description.return_type, bound_func)
+        add_unit_description(node, ds)
+
+    def assignment(self, node: TreeWithLanguageUnit):
+        self.visit(node.unit.right_expression)
+        if isinstance(node.unit.left_expression, TokenAndLanguageUnit):
+            self.visit(node.unit.left_expression)
+        else:
+            self.visit(node.unit.left_expression)
+        check_can_assign_expression(node.unit.left_expression, node.unit.right_expression)
+        assert isinstance(node.unit.right_expression, TokenAndLanguageUnit)
+        left_expression = extract_unit(node, "left_expression")
+        if isinstance(left_expression.description, IdentifierDs):
+            description = left_expression.description.bound_declaration.unit.description
+        else:
+            description = extract_unit(node, "left_expression").description
+        description.bound_definition = node.unit.right_expression
 
     def call_suffix(self, node: TreeWithLanguageUnit):
         # type_arguments are not supported yet
@@ -61,7 +129,9 @@ class SemanticAnalyzer(Interpreter):
 
     def function_call_arguments(self, node: TreeWithLanguageUnit):
         # for each expression check if it's ok
-        self.visit_primary_expression_node(node.unit.expressions[0])
+        # TODO(@pochka15): now it takes only the first argument
+        assert len(node.unit.expressions) == 1
+        self.visit(node.unit.expressions[0])
 
     def postfix_unary_expression(self, node: TreeWithLanguageUnit):
         def check_suffix_can_be_applied(description, suffix):
@@ -72,42 +142,28 @@ class SemanticAnalyzer(Interpreter):
                 description.formal_parameters,
                 suffix.function_call_arguments.unit.expressions)
 
-        primary_expression_token = node.unit.primary_expression
-        self.visit_primary_expression_node(primary_expression_token)
-        current_description: CallableDs = primary_expression_token.unit.description
+        primary_expression_node = node.unit.primary_expression
+        self.visit(primary_expression_node)
+        bound_function_node: DescribedUnitContainer = primary_expression_node.unit.description.bound_declaration
+        current_description: CallableDs = bound_function_node.unit.description
         current_type = None
         for suffix_node in node.unit.suffixes:
             self.visit(suffix_node)
             check_suffix_can_be_applied(current_description, suffix_node.unit)
             current_type = current_description.return_type
         assert current_type is not None
-        self.current_scope.put(
-            with_added_unit_description(
-                node, UnitWithTypeDs(str(node.unit), current_type)))
+        add_unit_description(node, UnitWithTypeDs(str(node.unit), current_type))
 
     def variable_declaration(self, node: LanguageUnitContainer):
-        type_name = extract_unit(node, "type_name")
-        assert len(type_name.simple_user_types) == 1, f"this type is not supported {str(node.unit)}"
-        var_type_node: LanguageUnitContainer = type_name.simple_user_types[0]
+        type_unit = extract_unit(node, "type")
+        assert len(type_unit.simple_user_types) == 1, f"this type is not supported {str(node.unit)}"
+        var_type_node: LanguageUnitContainer = type_unit.simple_user_types[0]
         var_name_node: LanguageUnitContainer = node.unit.variable_name
 
-        # TODO(@pochka15): what about symbols should each variable declaration unit child be somehow added to the table?
         check_type_exists(str(var_type_node.unit), self.current_scope, var_type_node)
         check_declaration_doesnt_exist(str(var_name_node.unit), self.current_scope, var_name_node)
 
         self.current_scope.put(
-            with_added_unit_description(
-                node, UnitWithTypeDs(str(var_name_node.unit), str(var_type_node.unit))))
-
-
-def extract_unit(node: TreeWithLanguageUnit, *path_to_target_attribute):
-    """Extract unit recursively using the given attributes"""
-    for at in path_to_target_attribute:
-        node = getattr(node.unit, at)
-    return node.unit
-
-
-def extracted_list_units(unit, list_attribute_name: str):
-    lst = getattr(unit, list_attribute_name)
-    for elem in lst:
-        yield elem.unit
+            add_unit_description(
+                node, VariableDeclarationDs(str(var_name_node.unit), str(var_type_node.unit))),
+            node.unit.description.name)

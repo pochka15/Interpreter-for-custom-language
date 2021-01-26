@@ -42,8 +42,8 @@ class Scope:
     def __str__(self):
         return "Scope " + str(self.id) + ":\n" + '\n'.join(declaration for declaration in self.declarations)
 
-    def put(self, node: DescribedUnitContainer):
-        self.declarations[node.unit.description.name] = node
+    def put(self, node: DescribedUnitContainer, name):
+        self.declarations[name] = node
 
     def find_declared_node(self, declaration_name, current_scope_only=False) -> Optional[DescribedUnitContainer]:
         found = self.declarations.get(declaration_name)

@@ -52,7 +52,7 @@ property_assignment: NAME type? VISIBILITY_MODIFIER? val_or_var? ASSIGNMENT_OPER
 
 abstract_property_declaration: NAME type VISIBILITY_MODIFIER? ABSTRACT val_or_var?
 
-variable_declaration: NAME type? val_or_var?
+variable_declaration: NAME type val_or_var
 
 ?val_or_var: VAL | VAR
 
@@ -77,7 +77,7 @@ assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
 
 ?assignable_expression: prefix_unary_expression | _parenthesized{prefix_unary_expression}
 
-?directly_assignable_expression : postfix_unary_expression assignable_suffix
+?directly_assignable_expression : postfix_unary_expression assignable_suffix?
   | variable_declaration
   | _parenthesized{directly_assignable_expression}
 
@@ -144,6 +144,17 @@ if_expression: "if" expression "{" statements_block "}"
 
 ?simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
 
+%import python.DEC_NUMBER
+%import python.COMMENT
+%import python.STRING
+%import common.LETTER
+%import common.DIGIT
+%import common.WS
+%import common.NEWLINE -> _NL
+
+%ignore WS
+%ignore COMMENT
+
 // Non-terminals
 EQUALITY_OPERATOR: "!=" | "=="
 ASSIGNMENT_OPERATOR: "="
@@ -171,14 +182,3 @@ _CONTINUE_AT: "continue@"
 _BREAK_AT: "break@"
 ELSE: "else"
 NAME: /(?!(private|public|true|false|import|from|val|var|abstract|overridden|return|continue|break|else|class|interface|while|for|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/
-
-%import python.DEC_NUMBER
-%import python.COMMENT
-%import python.STRING
-%import common.LETTER
-%import common.DIGIT
-%import common.WS
-%import common.NEWLINE -> _NL
-
-%ignore WS
-%ignore COMMENT

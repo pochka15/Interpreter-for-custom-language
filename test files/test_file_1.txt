@@ -1,19 +1,13 @@
-import kek
+#a str val = "some"
+#print(a)
 
-kek int val = 10
-lol int var = 10
-
-# Function
-functionName<Type1>(argName1 int, argName2 float, argName3 str) int:
-    print("lol")
-    calc(12)
+a int var = 5
+b int val = 6
+c str val = "Hello"
+print(a)
 
 
-# Function without arguments
-functionName() int:
-    return 0
 
-# Function call
-hello("world")
 
-print(hello("world"))
+
+#print2(a + b)

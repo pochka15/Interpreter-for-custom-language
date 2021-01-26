@@ -29,20 +29,18 @@ def pretty(snippet: str) -> str:
 
 
 def main():
-    snippet = r"""
-a int val = 5
-b bool = True
-print(a)
-"""
+    with open("../test files/test_file_1.txt", "r") as f:
+        snippet = f.read()
     lark = initialized_lark_from_file('../grammar.lark')
     parsed_tree = lark.parse(snippet)
     transformed_tree: Tree = TreeTransformer().transform(parsed_tree)
+    # print(transformed_tree.pretty())
     scopes = []
     SemanticAnalyzer(scopes).visit(transformed_tree)
     CustomInterpreter().visit(transformed_tree)
     # Printing
-    for scope in scopes:
-        print(scope)
+    # for scope in scopes:
+    #     print(scope)
     # print(transformed_tree.pretty())
 
 

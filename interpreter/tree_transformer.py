@@ -3,10 +3,6 @@ from lark import Transformer, v_args
 from language_units import *
 
 
-def is_val(value: str) -> bool:
-    return True if value == 'val' else False
-
-
 def identity(x):
     return x
 
@@ -36,26 +32,21 @@ class TreeTransformer(Transformer):
     # ASSIGNMENT_OPERATOR
     __default_token__ = wrapped_token()
 
-    FLOAT_NUMBER = wrapped_token(float)
-    DEC_NUMBER = wrapped_token(int)
-    BOOLEAN = wrapped_token(lambda bool_str: bool(bool_str.upper()))
+    DEC_NUMBER = wrapped_token(lambda s: Int(int(s)))
+    BOOLEAN = wrapped_token(lambda s: Bool(s.capitalize()))
+    STRING = wrapped_token(lambda s: String(s.strip('\"')))
+    FLOAT_NUMBER = wrapped_token(lambda s: Float(float(s)))
+    ADDITIVE_OPERATOR = wrapped_token(lambda s: AdditiveOperator(s))
 
-    # TODO(@pochka15): check if it works
-    # def NAME(self, token: Token):
-    #     return TokenAndLanguageUnit(token, Identifier(token.value))
     NAME = wrapped_token(Identifier)
 
     def VAR(self, token: Token):
-        # token.update("IS_VAL", token.value)
-        return is_val(token.value)
+        token.update("IS_VAL", token.value)
+        return TokenAndLanguageUnit(token, IsVal(False))
 
     def VAL(self, token: Token):
-        # token.update("IS_VAL", token.value)
-        return is_val(token.value)
-
-    def statements_block(self, block_tree: Tree):
-        block_tree.children.append(Token('BLOCK_END', ''))
-        return block_tree
+        token.update("IS_VAL", token.value)
+        return TokenAndLanguageUnit(token, IsVal(True))
 
     indexing_suffix = wrapped_tree(IndexingSuffix)
     directly_assignable_expression = wrapped_tree(DirectlyAssignableExpression)
@@ -66,7 +57,6 @@ class TreeTransformer(Transformer):
     equality = wrapped_tree(Equality, lambda children: (children[0], children[1: len(children)]))
     import_with_from = wrapped_tree(ImportWithFrom)
     as_name = wrapped_tree(AsName)
-    variable_declaration = wrapped_tree(VariableDeclaration)
     function_call_arguments = wrapped_tree(FunctionCallArguments, lambda children: tuple([children]))
     import_targets = wrapped_tree(ImportTargets, lambda children: tuple([children]))
     type_arguments = wrapped_tree(TypeArguments, lambda children: tuple([children]))
@@ -120,3 +110,15 @@ class TreeTransformer(Transformer):
             first.unit.is_parenthesized = True
             return first
         return TreeWithLanguageUnit(tree, Type(children, False))
+
+    def variable_declaration(self, tree: Tree):
+        children_iter = iter(tree.children)
+        var_name_node = next(children_iter)
+        type_node = None
+        var_or_val_node = None
+        for child in children_iter:
+            if isinstance(child.unit, Type):
+                type_node = child
+            else:
+                var_or_val_node = child
+        return TreeWithLanguageUnit(tree, VariableDeclaration(var_name_node, type_node, var_or_val_node))

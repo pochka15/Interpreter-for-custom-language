@@ -30,7 +30,7 @@ def test_directly_assignable_expression(lark):
     snippet = "arr[0] = 5"
     root = next(parse_find_transform(lark, snippet, "directly_assignable_expression"))
     assert str(extract_unit(root, 'postfix_unary_expression')) == 'arr'
-    assert extract_unit(root, 'assignable_suffix', 'expression') == 0
+    assert str(extract_unit(root, 'assignable_suffix', 'expression')) == '0'
 
 
 def test_additive_expression(lark):

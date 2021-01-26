@@ -198,22 +198,19 @@ def test_immediately_called_if_expression(lark):
 def test_navigation_suffix_on_next_line(lark):
     snippet = r"""a int val = items[0].
 hello()
-k val = 5"""
+k int val = 5"""
     actual = lark.parse(snippet)
     expected = Tree('start', [Tree('assignment', [
         Tree('variable_declaration', [Token('NAME', 'a'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')]),
-        Token('ASSIGNMENT_OPERATOR', '='), Tree('postfix_unary_expression',
-                                                [Token('NAME', 'items'),
-                                                 Tree('indexing_suffix', [
-                                                     Token('DEC_NUMBER',
-                                                           '0')]),
-                                                 Tree('navigation_suffix', [
-                                                     Token('NAME', 'hello')]),
-                                                 Tree('call_suffix', [Tree(
-                                                     'function_call_arguments',
-                                                     [])])])]),
-                              Tree('assignment',
-                                   [Tree('variable_declaration', [Token('NAME', 'k'), Token('VAL', 'val')]),
-                                    Token('ASSIGNMENT_OPERATOR', '='), Token('DEC_NUMBER', '5')])])
+        Token('ASSIGNMENT_OPERATOR', '='), Tree('postfix_unary_expression', [Token('NAME', 'items'),
+                                                                             Tree('indexing_suffix',
+                                                                                  [Token('DEC_NUMBER', '0')]),
+                                                                             Tree('navigation_suffix',
+                                                                                  [Token('NAME', 'hello')]),
+                                                                             Tree('call_suffix', [
+                                                                                 Tree('function_call_arguments',
+                                                                                      [])])])]), Tree('assignment', [
+        Tree('variable_declaration', [Token('NAME', 'k'), Tree('type', [Token('NAME', 'int')]), Token('VAL', 'val')]),
+        Token('ASSIGNMENT_OPERATOR', '='), Token('DEC_NUMBER', '5')])])
     result, mes = trees_comparison_result(expected, actual)
     assert result, mes
