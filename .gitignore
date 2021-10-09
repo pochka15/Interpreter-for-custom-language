@@ -1,3 +1,5 @@
 tmp/
 /test/.ipynb_checkpoints/
 venv
+/env/
+/.idea/

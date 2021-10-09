@@ -1,9 +1,9 @@
-#a str val = "some"
+a str val = "some"
 #print(a)
 
-a int var = 5
-b int val = 6
-c str val = "Hello"
+# a int var = 5
+# b int val = 6
+#c str val = "Hello"
 print(a)
 
 

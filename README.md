@@ -2,30 +2,45 @@
 
 ## About the project
 
-This is an interpreter for the language that was designed by my own.
+This is an interpreter for the language that was designed by my own. It's a drill university project for the compilation techniques course.
 
 ## About the language
 
-The language itself is like a mixture of Kotlin, Python and maybe some other languages that attracted me. It's a statically typed general-purpose, class-based, object-oriented language programming language.
+The syntax of the language is like a mixture of Kotlin, Python. It's a statically typed general-purpose, programming language. It's made to perform simple operations on variables. Call functions and so on.
 
 ## Language wiki and grammar
 
-- On the wiki pages([link](https://github.com/pochka15/Interpreter-for-custom-language/wiki/Basics)) you can find how to use the language.
+- On the ([wiki pages](https://github.com/pochka15/Interpreter-for-custom-language/wiki/Basics)) you can find how to use the language.
 - In this [link](./grammar.lark) you can see the whole grammar of the language written in *Lark's* custom EBNF format.
 
-## How to launch
+## Prerequisites
 
-**Prerequisites:** *TODO for future*
+- python3 _(todo: which version, mine is Python 3.8.9)_
+
+```bash
+# Install the virtual environment
+python3 -m pip install --user virtualenv
+
+# Create a virtual environment
+python3 -m venv env
+
+# Activate the virtual environment
+source env/bin/activate
+
+# root project catalog
+python3 -m pip install -r requirements.txt
+```
+
+## How to launch
 
 "cd" to the folder (src/main.py) containing main.py and enter:
 
 ```bash
-python main.py input.txt
+python3 main.py input.txt
 ```
 
 ## Used libraries
 
-- "lark" for parsing
 - "pytest" for testing
 
 ## Functional requirements
@@ -38,21 +53,15 @@ python main.py input.txt
 - The interpreter must be written in python 3.
 - The parsing time must take less than 2 seconds for any 1000 lines of code
 
-## How it's tested
+## Tests
 
-The "pytest" library is used for the unit testing. The same time the interpreter is tested by analyzing some pre-configured **correct** and **incorrect** code snippets.\
+- TODO(@pochka15): write what will be tested and how
 
-## Roadmap
+The "pytest" library is used for the unit testing. The same time the interpreter is tested by analyzing some pre-configured **correct** and **incorrect** code snippets.
 
-1. Interpret created language.
+## What must be interpreted
 
-### Finished tasks
-
-From the newest to latest tasks:
- 
-- [x] Write the language wiki
-- [x] Add the first version of grammar for assignment, function declarations and function calls
-
-### Somewhere in a *LONG-LONG* future
-
-1. Make some small helpful tools for the code editor like syntax highlighting, ...
+1. Variable declaration (numbers, bool, literal constants)
+2. Operations on variables: + - * /
+3. Control flow (if expression, for, while loop)
+4. Function call

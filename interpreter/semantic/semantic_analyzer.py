@@ -1,5 +1,3 @@
-from typing import Union
-
 from lark import Tree
 from lark.visitors import Interpreter
 
@@ -46,8 +44,10 @@ def builtin_nodes():
 
 
 class SemanticAnalyzer(Interpreter):
-    def __init__(self, scopes: List[Scope]):
+    def __init__(self, scopes=None):
         super().__init__()
+        if scopes is None:
+            scopes = []
         self.scopes = scopes
         root_scope = Scope(None)
         self.scopes.append(root_scope)

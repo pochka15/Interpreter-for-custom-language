@@ -4,12 +4,12 @@ import pyperclip
 import pytest
 from lark.lark import Lark, Tree
 
-from main import initialized_lark_from_file, fetched_tokens
+from main import initialize_lark_from_file, iter_tokens
 
 
 @pytest.fixture(scope="module")
 def lark() -> Lark:
-    return initialized_lark_from_file('../../grammar.lark')
+    return initialize_lark_from_file('../../grammar.lark')
 
 
 def clip(tree: Tree):
@@ -22,14 +22,14 @@ def trees_comparison_result(expected_tree: Tree, actual_tree: Tree) -> Tuple[boo
             if not t1.data == t2.data:
                 return (False, f'"{t1.data}" is not equal to the "{t2.data}"' + f"""
 Expected tree:
-{expected_tree.pretty()}
+{expected_tree.make_pretty()}
 ------
 Actual tree:
-{actual_tree.pretty()}
+{actual_tree.make_pretty()}
     """)
 
         # When the data is equal compare all the tokens
-        for actual_token, expected_token in zip(fetched_tokens(actual_tree), fetched_tokens(expected_tree)):
+        for actual_token, expected_token in zip(iter_tokens(actual_tree), iter_tokens(expected_tree)):
             if not actual_token == expected_token:
                 return (False, f"Expected token: {expected_token.__repr__()}\nActual token: {actual_token.__repr__()}\n"
                                f"Actual tree:\n {str(actual_tree)}")

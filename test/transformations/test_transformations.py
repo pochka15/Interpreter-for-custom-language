@@ -2,7 +2,7 @@ from typing import Iterator
 
 from language_units import *
 from semantic.semantic_analyzer import extract_unit, extracted_list_units
-from test.language_units.utilities import *
+from test.transformations.utilities import *
 
 
 def parse_find_transform(lark: Lark, snippet: str, tree_data) -> Iterator:
@@ -93,20 +93,8 @@ def test_multiplicative_expression(lark):
     assert str(root.unit) == snippet
 
 
-def test_import_targets(lark):
-    snippet = "from some import target1 as t1, target2 as t2"
-    root = next(parse_find_transform(lark, snippet, "import_targets"))
-    assert str(root.unit) == "target1 as t1, target2 as t2"
-
-
-def test_from_path(lark):
-    snippet = "from ..kek.lol import something"
-    root = next(parse_find_transform(lark, snippet, "from_path"))
-    assert str(root.unit) == "..kek.lol"
-
-
 def test_type(lark):
-    snippet = "a ((Hmm<Kek, Lol<Inner1, Inner2>>.What<The, Hell>)) val = 5"
+    snippet = "a ((Cars.Bmw)) val = 5"
     root = next(parse_find_transform(lark, snippet, "type"))
     assert isinstance(root.unit, Type)
-    assert str(root.unit) == "(Hmm<Kek, Lol<Inner1, Inner2>>.What<The, Hell>)"
+    assert str(root.unit) == "(Cars.Bmw)"

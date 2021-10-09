@@ -2,73 +2,39 @@ _comma_separated{arg}: arg ("," arg)*
 
 _parenthesized{arg}: "(" arg ")"
 
-start: import_statement* ((statement | declaration) (_NL (statement | declaration))*)?
-
-?import_statement: import_without_from | import_with_from
-
-import_without_from: _IMPORT as_name ("," as_name)*
-
-import_with_from: _FROM from_path _IMPORT import_targets
-
-from_path: RELATIVE_LOCATION? NAME ((".") NAME)*
-
-?import_targets: as_name ("," as_name)* | ALL_TARGETS
-
-?as_name: NAME ("as" NAME)?
+start: ((statement | declaration) (_NL (statement | declaration))*)?
 
 ?identifier: NAME
 
-function_declaration: NAME type_arguments? function_parameters VISIBILITY_MODIFIER? OVERRIDDEN? FUNCTION_RETURN_TYPE? "{" statements_block "}"
-
-abstract_function_declaration: NAME type_arguments? function_parameters VISIBILITY_MODIFIER? ABSTRACT? FUNCTION_RETURN_TYPE
+function_declaration: NAME function_parameters VISIBILITY_MODIFIER? FUNCTION_RETURN_TYPE? "{" statements_block "}"
 
 function_parameters: "(" _comma_separated{function_parameter}? ")"
 
-type_arguments: "<" _comma_separated{type} ">"
+function_parameter: NAME type
 
-function_parameter: NAME type val_or_var?
+type: _parenthesized{type} | simple_type ("." simple_type)*
 
-type: _parenthesized{type} | simple_user_type ("." simple_user_type)*
-
-?simple_user_type: NAME type_arguments?
+?simple_type: NAME
 
 ?statement: assignment | for_statement | while_statement | expression | jump_statement
 
-?declaration: interface_declaration | class_declaration | function_declaration
-
-interface_declaration: NAME type_arguments? parents? "interface" "{" interface_body? "}"
+?declaration: class_declaration | function_declaration
 
 parents: _comma_separated{NAME}
-
-interface_body: interface_function_declaration (_NL interface_function_declaration)*
-
-?interface_function_declaration: function_declaration | function_declaration_without_body
-
-function_declaration_without_body: NAME type_arguments? function_parameters FUNCTION_RETURN_TYPE
 
 property_declaration: NAME type VISIBILITY_MODIFIER? val_or_var?
 
 property_assignment: NAME type? VISIBILITY_MODIFIER? val_or_var? ASSIGNMENT_OPERATOR expression
 
-abstract_property_declaration: NAME type VISIBILITY_MODIFIER? ABSTRACT val_or_var?
-
 variable_declaration: NAME type val_or_var
 
 ?val_or_var: VAL | VAR
 
-?class_declaration: abstract_class_declaration | non_abstract_class_declaration
+?class_declaration: NAME parents? "class" "{" class_body "}"
 
-abstract_class_declaration: NAME type_arguments? parents? ABSTRACT "class" "{" abstract_class_body "}"
+class_body: (member_declaration (_NL member_declaration)*)?
 
-non_abstract_class_declaration: NAME type_arguments? parents? "class" "{" non_abstract_class_body "}"
-
-abstract_class_body: (abstract_class_member_declaration (_NL abstract_class_member_declaration)*)?
-
-non_abstract_class_body: (non_abstract_class_member_declaration (_NL non_abstract_class_member_declaration)*)?
-
-abstract_class_member_declaration: function_declaration | property_assignment | abstract_property_declaration | abstract_function_declaration
-
-non_abstract_class_member_declaration: function_declaration | property_declaration | property_assignment
+member_declaration: function_declaration | property_declaration | property_assignment
 
 statements_block: (statement (_NL statement+)*)?
 
@@ -81,8 +47,7 @@ assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
   | variable_declaration
   | _parenthesized{directly_assignable_expression}
 
-?assignable_suffix: type_arguments
-  | indexing_suffix
+?assignable_suffix: indexing_suffix
   | navigation_suffix
 
 for_statement: label? "for" NAME "in" expression "{" statements_block "}"
@@ -111,9 +76,9 @@ function_call_arguments: (expression ("," expression)*)?
 
 ?postfix_unary_expression: primary_expression postfix_unary_suffix*
 
-?postfix_unary_suffix: type_arguments | call_suffix | indexing_suffix | navigation_suffix
+?postfix_unary_suffix: call_suffix | indexing_suffix | navigation_suffix
 
-call_suffix: type_arguments? "(" function_call_arguments ")"
+call_suffix: "(" function_call_arguments ")"
 
 indexing_suffix: "[" expression "]"
 
@@ -126,7 +91,6 @@ navigation_suffix: "." NAME
   | if_expression
 
 collection_literal: "[" expression ("," expression)* "]" | "[" "]"
-
 
 jump_statement: RETURN expression?
   | CONTINUE
@@ -166,19 +130,14 @@ COMPARISON_OPERATOR:  "<" | ">" | "<=" | ">="
 ADDITIVE_OPERATOR: "+" | "-"
 PREFIX_OPERATOR: ADDITIVE_OPERATOR | "!"
 MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
-_IMPORT: "import"
 ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
-_FROM: "from"
 RELATIVE_LOCATION: /\.+/
-ALL_TARGETS: "*"
 VAL: "val"
 VAR: "var"
-ABSTRACT: "abstract"
-OVERRIDDEN: "overridden"
 RETURN: "return"
 CONTINUE: "continue"
 BREAK: "break"
 _CONTINUE_AT: "continue@"
 _BREAK_AT: "break@"
 ELSE: "else"
-NAME: /(?!(private|public|true|false|import|from|val|var|abstract|overridden|return|continue|break|else|class|interface|while|for|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/
+NAME: /(?!(private|public|true|false|from|val|var|return|continue|break|else|class|while|for|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/
