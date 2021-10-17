@@ -12,10 +12,10 @@ def parse_find_transform(lark: Lark, snippet: str, tree_data) -> Iterator:
 
 
 def test_variable_declaration(lark):
-    snippet = "a int val = 1"
+    snippet = "/c a int = 1"
     variable_declaration = next(parse_find_transform(lark, snippet, "variable_declaration")).unit
     assert isinstance(variable_declaration, VariableDeclaration)
-    assert str(variable_declaration) == "a int val"
+    assert str(variable_declaration) == "/c a int"
 
 
 def test_prefix_unary_expression(lark):
@@ -41,7 +41,7 @@ def test_additive_expression(lark):
 
 
 def test_assignment(lark):
-    snippet = "a int val = 5"
+    snippet = "/c a int = 5"
     root = next(parse_find_transform(lark, snippet, "assignment"))
     var_decl = extract_unit(root, 'left_expression')
     assert (isinstance(var_decl, VariableDeclaration))
@@ -65,7 +65,7 @@ def test_disjunction(lark):
 
 
 def test_equality(lark):
-    snippet = "a bool val = x != y"
+    snippet = "/c a bool = x != y"
     root = next(parse_find_transform(lark, snippet, "equality"))
     assert str(root.unit) == "x != y"
 
@@ -88,13 +88,13 @@ def test_postfix_unary_expression(lark):
 
 
 def test_multiplicative_expression(lark):
-    snippet = "a * b / c % d"
+    snippet = "a * b // c % d"
     root = next(parse_find_transform(lark, snippet, "multiplicative_expression"))
     assert str(root.unit) == snippet
 
 
 def test_type(lark):
-    snippet = "a ((Cars.Bmw)) val = 5"
+    snippet = "/c a ((Cars.Bmw)) = 5"
     root = next(parse_find_transform(lark, snippet, "type"))
     assert isinstance(root.unit, Type)
     assert str(root.unit) == "(Cars.Bmw)"

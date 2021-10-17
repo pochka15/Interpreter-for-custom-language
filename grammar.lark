@@ -6,7 +6,7 @@ start: ((statement | declaration) (_NL (statement | declaration))*)?
 
 ?identifier: NAME
 
-function_declaration: NAME function_parameters VISIBILITY_MODIFIER? FUNCTION_RETURN_TYPE? "{" statements_block "}"
+function_declaration: "/fn" NAME function_parameters FUNCTION_RETURN_TYPE? "{" statements_block "}"
 
 function_parameters: "(" _comma_separated{function_parameter}? ")"
 
@@ -22,15 +22,15 @@ type: _parenthesized{type} | simple_type ("." simple_type)*
 
 parents: _comma_separated{NAME}
 
-property_declaration: NAME type VISIBILITY_MODIFIER? val_or_var?
+property_declaration: var_or_const? NAME type 
 
-property_assignment: NAME type? VISIBILITY_MODIFIER? val_or_var? ASSIGNMENT_OPERATOR expression
+property_assignment: var_or_const? NAME type? ASSIGNMENT_OPERATOR expression
 
-variable_declaration: NAME type val_or_var
+variable_declaration: var_or_const NAME type
 
-?val_or_var: VAL | VAR
+?var_or_const: "/v" | "/c"
 
-?class_declaration: NAME parents? "class" "{" class_body "}"
+?class_declaration: "/cl" NAME parents? "{" class_body "}"
 
 class_body: (member_declaration (_NL member_declaration)*)?
 
@@ -50,9 +50,9 @@ assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
 ?assignable_suffix: indexing_suffix
   | navigation_suffix
 
-for_statement: label? "for" NAME "in" expression "{" statements_block "}"
+for_statement: "/f" label? NAME "in" expression "{" statements_block "}"
 
-while_statement: label? "while" expression "{" statements_block "}"
+while_statement: "/w" label? expression "{" statements_block "}"
 
 label: NAME "@"
 
@@ -124,20 +124,17 @@ EQUALITY_OPERATOR: "!=" | "=="
 ASSIGNMENT_OPERATOR: "="
 BOOLEAN: "true" | "false"
 FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
-VISIBILITY_MODIFIER: "private" | "public"
 FUNCTION_RETURN_TYPE: NAME
 COMPARISON_OPERATOR:  "<" | ">" | "<=" | ">="
 ADDITIVE_OPERATOR: "+" | "-"
 PREFIX_OPERATOR: ADDITIVE_OPERATOR | "!"
-MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
-ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
+MULTIPLICATIVE_OPERATOR: "*" | "//" | "%"
+ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "//=" | "%="
 RELATIVE_LOCATION: /\.+/
-VAL: "val"
-VAR: "var"
-RETURN: "return"
+RETURN: "ret"
 CONTINUE: "continue"
 BREAK: "break"
 _CONTINUE_AT: "continue@"
 _BREAK_AT: "break@"
 ELSE: "else"
-NAME: /(?!(private|public|true|false|from|val|var|return|continue|break|else|class|while|for|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/
+NAME: /(?!(true|false|ret|continue|break|else|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/
