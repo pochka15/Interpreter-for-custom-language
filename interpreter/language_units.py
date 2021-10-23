@@ -81,10 +81,10 @@ class Identifier:
 class VariableDeclaration:
     variable_name: TokenAndLanguageUnit
     type: TokenAndLanguageUnit
-    var_or_val: TokenAndLanguageUnit
+    var_or_const: TokenAndLanguageUnit
 
     def __repr__(self):
-        return " ".join([str(self.variable_name.unit), str(self.type.unit), str(self.var_or_val.unit)])
+        return " ".join([str(self.variable_name.unit), str(self.type.unit), str(self.var_or_const.unit)])
 
 
 @dataclass

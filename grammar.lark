@@ -6,7 +6,7 @@ start: ((statement | declaration) (_NL (statement | declaration))*)?
 
 ?identifier: NAME
 
-function_declaration: "/fn" NAME function_parameters FUNCTION_RETURN_TYPE? "{" statements_block "}"
+function_declaration: "/f" NAME function_parameters FUNCTION_RETURN_TYPE? "{" statements_block "}"
 
 function_parameters: "(" _comma_separated{function_parameter}? ")"
 
@@ -30,7 +30,7 @@ variable_declaration: var_or_const NAME type
 
 ?var_or_const: "/v" | "/c"
 
-?class_declaration: "/cl" NAME parents? "{" class_body "}"
+?class_declaration: "class" NAME parents? "{" class_body "}"
 
 class_body: (member_declaration (_NL member_declaration)*)?
 
@@ -50,9 +50,9 @@ assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
 ?assignable_suffix: indexing_suffix
   | navigation_suffix
 
-for_statement: "/f" label? NAME "in" expression "{" statements_block "}"
+for_statement: "for" label? NAME "in" expression "{" statements_block "}"
 
-while_statement: "/w" label? expression "{" statements_block "}"
+while_statement: "while" label? expression "{" statements_block "}"
 
 label: NAME "@"
 
@@ -137,4 +137,4 @@ BREAK: "break"
 _CONTINUE_AT: "continue@"
 _BREAK_AT: "break@"
 ELSE: "else"
-NAME: /(?!(true|false|ret|continue|break|else|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/
+NAME: /(?!(class|true|false|ret|continue|break|else|this|in)\b)[a-zA-Z_][a-zA-Z_0-9]*/

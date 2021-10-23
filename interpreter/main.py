@@ -7,6 +7,7 @@ from code_snippet_generation import with_bold_keywords, with_italic_comments, wi
 from interpretation.custom_interpreter import CustomInterpreter
 from semantic.semantic_analyzer import SemanticAnalyzer
 from tree_transformer import TreeTransformer
+from pyperclip import copy
 
 
 def initialize_lark_from_file(relative_path_to_file: str) -> Lark:
@@ -38,4 +39,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    copy(make_pretty("""
+    # function call
+    make_pretty("Bog", 10)
+    """))
