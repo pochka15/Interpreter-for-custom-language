@@ -1,4 +1,4 @@
-start: (function_declaration (_NL function_declaration)*)?
+start: (function_declaration (NEWLINE function_declaration)*)?
 
 function_declaration: NAME function_parameters FUNCTION_RETURN_TYPE? "{" statements_block "}"
 
@@ -8,29 +8,29 @@ function_parameter: NAME type
 
 type: "(" type ")" | simple_type ("." simple_type)*
 
-// Hide
+// Inline
 simple_type: NAME
 
-// Hide
+// Inline
 statement: assignment | for_statement | while_statement | expression | jump_statement
 
 variable_declaration: (VAR | CONST) NAME type
 
-statements_block: (statement (_NL statement+)*)?
+statements_block: (statement (NEWLINE statement+)*)?
 
 assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
   | assignable_expression ASSIGNMENT_AND_OPERATOR expression
 
-// Hide
+// Inline
 assignable_expression: prefix_unary_expression 
   | "(" prefix_unary_expression ")"
 
-// Hide
+// Inline
 directly_assignable_expression : postfix_unary_expression assignable_suffix?
   | variable_declaration
   | "(" directly_assignable_expression ")"
 
-// Hide
+// Inline
 assignable_suffix: indexing_suffix
   | navigation_suffix
 
@@ -38,36 +38,36 @@ for_statement: "for" NAME "in" expression "{" statements_block "}"
 
 while_statement: "while" expression "{" statements_block "}"
 
-// Hide
+// Inline
 expression: disjunction
 
-// Hide
+// Inline
 disjunction: conjunction ("||" conjunction)*
 
-// Hide
+// Inline
 conjunction: equality ("&&" equality)*
 
-// Hide
+// Inline
 equality: comparison (EQUALITY_OPERATOR comparison)*
 
-// Hide
+// Inline
 comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
 
 function_call_arguments: (expression ("," expression)*)?
 
-// Hide
+// Inline
 additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
 
-// Hide
+// Inline
 multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
 
-// Hide
+// Inline
 prefix_unary_expression: PREFIX_OPERATOR* postfix_unary_expression
 
-// Hide
+// Inline
 postfix_unary_expression: primary_expression postfix_unary_suffix*
 
-// Hide
+// Inline
 postfix_unary_suffix: call_suffix | indexing_suffix | navigation_suffix
 
 call_suffix: "(" function_call_arguments ")"
@@ -76,14 +76,14 @@ indexing_suffix: "[" expression "]"
 
 navigation_suffix: "." NAME
 
-// Hide
+// Inline
 primary_expression: "(" expression ")"
   | identifier
   | simple_literal
   | collection_literal
   | if_expression
 
-// Hide
+// Inline
 identifier: NAME
 
 collection_literal: "[" expression ("," expression)* "]" | "[" "]"
@@ -95,19 +95,27 @@ if_expression: "if" expression "{" statements_block "}"
   | "if" expression "{" statements_block "}" ELSE "{" statements_block "}"
   | "if" expression "{" statements_block "}" ELSE if_expression
 
-// Hide
+// Inline
 simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
 
-%import python.DEC_NUMBER
-%import python.COMMENT
-%import python.STRING
-%import common.LETTER
-%import common.DIGIT
-%import common.WS
-%import common.NEWLINE -> _NL
+DEC_NUMBER: /0|[1-9][\d_]*/i
+COMMENT: /#[^\n]*/
+STRING : /[ubf]?r?("(?!"").*?(?<!\\)(\\\\)*?"|'(?!'').*?(?<!\\)(\\\\)*?')/i
+DIGIT: "0".."9"
 
-%ignore WS
-%ignore COMMENT
+//
+// Names (Variables)
+//
+LCASE_LETTER: "a".."z"
+UCASE_LETTER: "A".."Z"
+LETTER: UCASE_LETTER | LCASE_LETTER
+//
+// Whitespace
+//
+WS: /[ \t\f\r\n]/+
+CR : /\r/
+LF : /\n/
+NEWLINE: (CR? LF)+
 
 // Non-terminals
 EQUALITY_OPERATOR: "!=" | "=="

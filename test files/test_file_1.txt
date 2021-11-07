@@ -1,13 +1,22 @@
-a str val = "some"
-#print(a)
+add_one int (element int) {
+     ret element + 1
+}
 
-# a int var = 5
-# b int val = 6
-#c str val = "Hello"
-print(a)
+print_at_even_pos void (elements List) {
+    v i int = 0
+    for val in elements {
+        c is_even = i % 2 == 0
+        print(if is_even { toString(val) } else { "" })
+        i += 1
+    }
+}
 
+main void () {
+    # constant
+    c elements List = [1, 2, 3]
 
-
-
-
-#print2(a + b)
+    print_at_even_pos(elements)
+    
+    c last int = elements[elements.size() - 1)]
+    print(elements.add(add_one(last)))
+}

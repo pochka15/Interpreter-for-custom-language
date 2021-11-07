@@ -1,8 +1,6 @@
 import re
 
-keywords = ("private", "public", "true", "false", "import", "from", "val",
-            "var", "abstract", "overridden", "return", "continue",
-            "break", "else", "class", "interface", "while", "for", "this", "in")
+keywords = ("for", "while", "true", "false", "ret", "break", "else", "in", "v", "c", "int", "float", "bool", "List")
 
 
 def with_bold_keywords(in_str: str) -> str:
@@ -16,21 +14,6 @@ def with_bold_keywords(in_str: str) -> str:
         before = in_str[0: start_ind]
         mid = "<b>" + found_keyword + "</b>"
         after = with_bold_keywords(in_str[end_ind: len(in_str)])
-        return before + mid + after
-    return in_str
-
-
-def with_this_keyword_in_bold(in_str: str) -> str:
-    pat = re.compile(r"\W(this)\.")
-    search_result = pat.search(in_str)
-    if search_result is not None:
-        start_ind = search_result.start(1)
-        end_ind = search_result.end(1)
-        found_keyword = search_result.group(1)
-
-        before = in_str[0: start_ind]
-        mid = "<b>" + found_keyword + "</b>"
-        after = with_this_keyword_in_bold(in_str[end_ind: len(in_str)])
         return before + mid + after
     return in_str
 
