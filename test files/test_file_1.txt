@@ -1,3 +1,18 @@
+#T
+main void () {
+    # constant
+    c elements List = [1, 2, 3]
+
+    print_at_even_pos(elements)
+    
+    c last int = elements[elements.size() - 1)]
+    print(elements.add(add_one(last)))
+}
+
+tmp void () {
+    ret "hello"
+}
+
 add_one int (element int) {
      ret element + 1
 }
@@ -9,14 +24,4 @@ print_at_even_pos void (elements List) {
         print(if is_even { toString(val) } else { "" })
         i += 1
     }
-}
-
-main void () {
-    # constant
-    c elements List = [1, 2, 3]
-
-    print_at_even_pos(elements)
-    
-    c last int = elements[elements.size() - 1)]
-    print(elements.add(add_one(last)))
 }

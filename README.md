@@ -109,8 +109,8 @@ Scanner is tested by matching the generated token sequence with an expected sequ
 
 ```python
 def test_comment_token():
-    snippet = "c a int # this is some comment"
-    assert list(Scanner().iter_tokens()) == [Name, Comment]
+  snippet = "c a int # this is some comment"
+  assert list(Scanner().iter_tokens()) == TODO( @ pochka15): finish
 ```
 
 ### Transformation tests
@@ -210,13 +210,9 @@ This visitor is primarily made to run the semantic analysis and prepare the tree
 **Token**
 
 - type
-- start_pos
 - value
 - line
 - column
-- end_line
-- end_column
-- end_pos
 
 **TransformationNode**
 

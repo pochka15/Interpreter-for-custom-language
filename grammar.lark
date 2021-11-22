@@ -1,8 +1,8 @@
 start: (function_declaration (_NL function_declaration)*)?
 
-function_declaration: NAME function_parameters FUNCTION_RETURN_TYPE? "{" statements_block "}"
+function_declaration: NAME "(" function_parameters ")" FUNCTION_RETURN_TYPE? "{" statements_block "}"
 
-function_parameters: "(" (function_parameter ("," function_parameter)*)? ")"
+function_parameters: (function_parameter ("," function_parameter)*)?
 
 function_parameter: NAME type
 
@@ -109,7 +109,7 @@ simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
 %ignore WS
 %ignore COMMENT
 
-// Non-terminals
+// Terminals
 EQUALITY_OPERATOR: "!=" | "=="
 ASSIGNMENT_OPERATOR: "="
 BOOLEAN: "true" | "false"

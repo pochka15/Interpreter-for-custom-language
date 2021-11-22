@@ -5,9 +5,9 @@ from lark.lexer import Token
 
 from code_snippet_generation import with_bold_keywords, with_italic_comments, with_pre_tag
 from interpretation.custom_interpreter import CustomInterpreter
+from scanner.scanner import load_grammar, Scanner
 from semantic.semantic_analyzer import SemanticAnalyzer
 from tree_transformer import TreeTransformer
-from pyperclip import copy
 
 
 def initialize_lark_from_file(relative_path_to_file: str) -> Lark:
@@ -28,7 +28,7 @@ def make_pretty(snippet: str) -> str:
             with_bold_keywords(snippet)))
 
 
-def main():
+def prev_main():
     with open("../test files/test_file_1.txt", "r") as f:
         snippet = f.read()
     lark = initialize_lark_from_file('../grammar.lark')
@@ -37,16 +37,37 @@ def main():
     CustomInterpreter().visit(tree)
 
 
+def debug_tokens(tokens: Iterable[Token]):
+    for token in tokens:
+        if token.type != 'WS' and token.type != 'NEWLINE':
+            print(token.value)
+
+
+def main():
+    with open('../grammar.txt') as f:
+        grammar = load_grammar(f)
+    debug_term_defs(grammar)
+    scanner = Scanner(grammar)
+    with open("../test files/test_file_1.txt", "r") as f:
+        debug_tokens(scanner.iter_tokens(f))
+
+
+def debug_term_defs(grammar):
+    for matcher in grammar.terminal_matchers:
+        print(matcher.name + ": " + str(matcher))
+
+
 if __name__ == "__main__":
-    copy(make_pretty("""
-    # Create a list
-    c numbers List = [1, 2, 3]
-
-    # Get element by index
-    c first_element int = numbers[0] # Indexation starts from 0
-
-    # Add element to the end
-    numbers.add(4)
-
-    c fourth_element = numbers[3]
-    """))
+    main()
+    # copy(make_pretty("""
+    # # Create a list
+    # c numbers List = [1, 2, 3]
+    # 
+    # # Get element by index
+    # c first_element int = numbers[0] # Indexation starts from 0
+    # 
+    # # Add element to the end
+    # numbers.add(4)
+    # 
+    # c fourth_element = numbers[3]
+    # """))
