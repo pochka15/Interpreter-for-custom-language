@@ -144,8 +144,6 @@ class Scanner:
 
             if len(candidates) == 1:
                 candidate = candidates[0]
-                if self.no_more_chars:
-                    self.prev_cursor = self.end_cursor
 
                 yield Token(candidate.name,
                             self.last_matched_text,
@@ -177,6 +175,7 @@ class Scanner:
             char = next(self.chars)
         except StopIteration:
             self.no_more_chars = True
+            self.prev_cursor = self.end_cursor.clone()
             return
         self.prev_cursor = self.end_cursor.clone()
         is_new_line = re.match(r'[\r\n]', char)
@@ -193,13 +192,13 @@ class Scanner:
     def collect_candidates(self, collected: List[Matcher] = None) -> List[Matcher]:
         if collected is None:
             collected = []
-        matchers = list(
+        candidates = list(
             filter(lambda x: x.matches(self.cur_text),
                    self.grammar.terminal_matchers))
-        if len(matchers) == 0:
+        if len(candidates) == 0:
             return collected
         old = list(filter(lambda x: x.matches(self.cur_text), collected))
-        new = list(filter(lambda x: not exists_matcher(collected, x.name), matchers))
+        new = list(filter(lambda x: not exists_matcher(collected, x.name), candidates))
         self.last_matched_text = str(self.cur_text)
         self.move()
         if self.no_more_chars:

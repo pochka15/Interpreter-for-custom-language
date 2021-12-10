@@ -24,6 +24,13 @@ def find_token(tokens, type_=None, value=None) -> Optional[Token]:
     return None
 
 
+def test_long_name(grammar: Grammar):
+    s = 'x' * 260
+    with io.StringIO(s) as f:
+        with pytest.raises(Exception):
+            list(Scanner(grammar).iter_tokens(f))
+
+
 def test_positions(grammar: Grammar):
     s = 'c a int = 5'
     columns = [1, 3, 7, 9, 11]

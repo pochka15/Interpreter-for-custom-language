@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from re import Pattern
+from typing import List
 
 
 class Matcher(ABC):
@@ -52,7 +53,7 @@ class AlternativeMatcher(Matcher):
     def name(self):
         return self._name
 
-    def __init__(self, alternatives, name):
+    def __init__(self, alternatives: List[str], name):
         self.alternatives = alternatives
         self._name = name
 

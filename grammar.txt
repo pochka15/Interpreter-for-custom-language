@@ -103,7 +103,7 @@ if_expression: "if" expression "{" statements_block "}"
 simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
 
 DEC_NUMBER: /0|[1-9][\d_]*/i
-COMMENT: /#[^\n]*/
+COMMENT: /#[^\r\n]*/
 STRING: LEXER_IMP
 
 //LETTER: /[a-zA-Z]/
@@ -115,7 +115,7 @@ EQUALITY_OPERATOR: "!=" | "=="
 ASSIGNMENT_OPERATOR: "="
 BOOLEAN: "true" | "false"
 FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
-COMPARISON_OPERATOR:  "<" | ">" | "<=" | ">="
+COMPARISON_OPERATOR: "<" | ">" | "<=" | ">="
 ADDITIVE_OPERATOR: "+" | "-"
 NEGATION: "!"
 MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
