@@ -4,11 +4,11 @@ function_declaration: NAME "(" function_parameters ")" function_return_type? "{"
 
 function_parameters: (function_parameter ("," function_parameter)*)?
 
-function_return_type: NAME
+function_return_type: identifier
 
 function_parameter: NAME type
 
-type: "(" type ")" | simple_type ("." simple_type)*
+type: simple_type ("." simple_type)*
 
 // Inline
 simple_type: NAME
@@ -96,8 +96,11 @@ jump_statement: RETURN expression?
   | BREAK
 
 if_expression: "if" expression "{" statements_block "}"
-  | "if" expression "{" statements_block "}" ELSE "{" statements_block "}"
-  | "if" expression "{" statements_block "}" ELSE if_expression
+  | "if" expression "{" statements_block "}" elseif_expression* else_expression?
+  
+elseif_expression: ELIF expression "{" statements_block "}"
+
+elseif_expression: ELSE  "{" statements_block "}" 
 
 // Inline
 simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
@@ -131,4 +134,4 @@ IN: "in"
 WHILE: "while"
 OR: "or"
 AND: "and"
-NAME: /(?!(or|and|for|while|true|false|ret|break|else|in|v|c)\b)[a-zA-Z_][a-zA-Z_0-9]*/
+NAME: /(?!(if|elif|or|and|for|while|true|false|ret|break|else|in|v|c)\b)[a-zA-Z_][a-zA-Z_0-9]*/

@@ -1,6 +1,7 @@
 import re
 
-keywords = ("for", "while", "true", "false", "ret", "break", "else", "in", "v", "c", "int", "float", "bool", "List")
+keywords = (
+"for", "while", "true", "false", "ret", "break", "else", "in", "v", "c", "int", "float", "bool", "List", "if", "elif")
 
 
 def with_bold_keywords(in_str: str) -> str:

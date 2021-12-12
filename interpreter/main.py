@@ -4,10 +4,8 @@ from lark import Lark, Tree
 from lark.lexer import Token
 
 from code_snippet_generation import with_bold_keywords, with_italic_comments, with_pre_tag
-from interpretation.custom_interpreter import CustomInterpreter
+from parser import RecursiveDescentParser
 from scanner.scanner import load_grammar, Scanner
-from semantic.semantic_analyzer import SemanticAnalyzer
-from tree_transformer import TreeTransformer
 
 
 def initialize_lark_from_file(relative_path_to_file: str) -> Lark:
@@ -28,15 +26,6 @@ def make_pretty(snippet: str) -> str:
             with_bold_keywords(snippet)))
 
 
-def prev_main():
-    with open("../test files/test_file_1.txt", "r") as f:
-        snippet = f.read()
-    lark = initialize_lark_from_file('../grammar.lark')
-    tree: Tree = TreeTransformer().transform(lark.parse(snippet))
-    SemanticAnalyzer().visit(tree)
-    CustomInterpreter().visit(tree)
-
-
 def debug_tokens(tokens: Iterable[Token]):
     for token in tokens:
         if token.type != 'WS' and token.type != 'NEWLINE':
@@ -48,8 +37,9 @@ def main():
         grammar = load_grammar(f)
     debug_term_defs(grammar)
     scanner = Scanner(grammar)
+    parser = RecursiveDescentParser()
     with open("../test files/test_file_1.txt", "r") as f:
-        debug_tokens(scanner.iter_tokens(f))
+        parser.parse(scanner.iter_tokens(f))
 
 
 def debug_term_defs(grammar):

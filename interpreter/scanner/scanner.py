@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Any, Iterator, Tuple, TextIO
 
-from matchers import RegexMatcher, Matcher, AlternativeMatcher, StringMatcher
+from scanner.matchers import RegexMatcher, Matcher, AlternativeMatcher, StringMatcher
 
 MAX_TOKEN_LEN = 255
 DEFAULT_TERMINAL_ENTRIES = (("LEFT_PAREN", '"("'),
