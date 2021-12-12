@@ -4,7 +4,7 @@ function_declaration: NAME "(" function_parameters ")" function_return_type? "{"
 
 function_parameters: (function_parameter ("," function_parameter)*)?
 
-function_return_type: identifier
+function_return_type: NAME
 
 function_parameter: NAME type
 
@@ -21,16 +21,11 @@ variable_declaration: (VAR | CONST) NAME type
 statements_block: (statement (NEWLINE statement+)*)?
 
 assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
-  | assignable_expression ASSIGNMENT_AND_OPERATOR expression
-
-// Inline
-assignable_expression: prefix_unary_expression 
-  | "(" prefix_unary_expression ")"
+  | prefix_unary_expression ASSIGNMENT_AND_OPERATOR expression
 
 // Inline
 directly_assignable_expression : postfix_unary_expression assignable_suffix?
   | variable_declaration
-  | "(" directly_assignable_expression ")"
 
 // Inline
 assignable_suffix: indexing_suffix
