@@ -139,9 +139,9 @@ class RecursiveDescentParser:
         strict_match(token, "BREAK")
         return token
 
-    # TODO(@pochka15):
+    # Inline expression: disjunction
     def build_expression(self) -> Tree:
-        return None
+        return self.build_disjunction()
 
     # return_statement: RETURN expression?
     def build_return_statement(self):
@@ -164,3 +164,91 @@ class RecursiveDescentParser:
             self.tokens_controller.next()
             token = self.tokens_controller.peek()
         return counter
+
+    # // Optional inline
+    # disjunction: conjunction (OR conjunction)*
+    def build_disjunction(self):
+        children = [self.build_conjunction()]
+        while match(self.tokens_controller.peek(), "OR"):
+            self.tokens_controller.next()
+            children.append(self.build_conjunction())
+        if len(children) == 1:
+            return children[0]
+        else:
+            return Tree("disjunction", children)
+
+    # // Optional inline
+    # conjunction: equality (AND equality)*
+    def build_conjunction(self):
+        children = [self.build_equality()]
+        while match(self.tokens_controller.peek(), "AND"):
+            self.tokens_controller.next()
+            children.append(self.build_equality())
+        if len(children) == 1:
+            return children[0]
+        else:
+            return Tree("conjunction", children)
+
+    # // Optional inline
+    # equality: comparison (EQUALITY_OPERATOR comparison)*
+    def build_equality(self):
+        children = [self.build_comparison()]
+        while match(self.tokens_controller.peek(), "EQUALITY_OPERATOR"):
+            children.append(self.tokens_controller.next())
+            children.append(self.build_comparison())
+        if len(children) == 1:
+            return children[0]
+        else:
+            return Tree("equality", children)
+
+    # // Optional inline
+    # comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
+    def build_comparison(self):
+        children = [self.build_additive_expression()]
+        while match(self.tokens_controller.peek(), "COMPARISON_OPERATOR"):
+            children.append(self.tokens_controller.next())
+            children.append(self.build_additive_expression())
+        if len(children) == 1:
+            return children[0]
+        else:
+            return Tree("comparison", children)
+
+    # // Optional inline
+    # additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
+    def build_additive_expression(self):
+        children = [self.build_multiplicative_expression()]
+        while match(self.tokens_controller.peek(), "ADDITIVE_OPERATOR"):
+            children.append(self.tokens_controller.next())
+            children.append(self.build_multiplicative_expression())
+        if len(children) == 1:
+            return children[0]
+        else:
+            return Tree("additive_expression", children)
+
+    # // Optional inline
+    # multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
+    def build_multiplicative_expression(self):
+        children = [self.build_prefix_unary_expression()]
+        while match(self.tokens_controller.peek(), "MULTIPLICATIVE_OPERATOR"):
+            children.append(self.tokens_controller.next())
+            children.append(self.build_prefix_unary_expression())
+        if len(children) == 1:
+            return children[0]
+        else:
+            return Tree("multiplicative_expression", children)
+
+    # // Optional inline
+    # prefix_unary_expression: prefix_operator? postfix_unary_expression
+    def build_prefix_unary_expression(self):
+        children = []
+        if (match(self.tokens_controller.peek(), "NEGATION") or
+                match(self.tokens_controller.peek(), "ADDITIVE_OPERATOR")):
+            children.append(self.tokens_controller.next())
+        children.append(self.build_postfix_unary_expression())
+        if len(children) == 1:
+            return children[0]
+        return Tree("prefix_unary_expression", children)
+
+    # TODO(@pochka15): finish
+    def build_postfix_unary_expression(self):
+        return self.tokens_controller.next()

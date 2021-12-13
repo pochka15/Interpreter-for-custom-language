@@ -52,8 +52,6 @@ equality: comparison (EQUALITY_OPERATOR comparison)*
 // Optional inline
 comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
 
-function_call_arguments: (expression ("," expression)*)?
-
 // Optional inline
 additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
 
@@ -61,8 +59,9 @@ additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative
 multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
 
 // Optional inline
-prefix_unary_expression: prefix_operator* postfix_unary_expression
+prefix_unary_expression: prefix_operator? postfix_unary_expression
 
+// Inline
 prefix_operator: NEGATION | ADDITIVE_OPERATOR
 
 // Optional inline
@@ -72,6 +71,8 @@ postfix_unary_expression: primary_expression postfix_unary_suffix*
 postfix_unary_suffix: call_suffix | indexing_suffix | navigation_suffix
 
 call_suffix: "(" function_call_arguments ")"
+
+function_call_arguments: (expression ("," expression)*)?
 
 indexing_suffix: "[" expression "]"
 

@@ -31,7 +31,29 @@ class TreeTransformer(Transformer):
     # return_statement: RETURN expression?
     def return_statement(self, node):
         children = node.children
-        expression = node.children[0] if len(children) > 0 else None
-        return TreeWithLanguageUnit(
-            node,
-            ReturnStatement(expression))
+        expression = children[0] if len(children) > 0 else None
+        return TreeWithLanguageUnit(node, ReturnStatement(expression))
+
+    def disjunction(self, node):
+        return TreeWithLanguageUnit(node, Disjunction(node.children))
+
+    def conjunction(self, node):
+        return TreeWithLanguageUnit(node, Conjunction(node.children))
+
+    def equality(self, node):
+        return TreeWithLanguageUnit(node, Equality(node.children))
+
+    def additive_expression(self, node):
+        children = node.children
+        first = children[0]
+        rest = children[1:]
+        return TreeWithLanguageUnit(node, AdditiveExpression(first, rest))
+
+    def prefix_unary_expression(self, node):
+        children = node.children
+        if len(children) == 2:
+            operator, expr = children
+        else:
+            operator = None
+            expr = children[0]
+        return TreeWithLanguageUnit(node, PrefixUnaryExpression(operator, expr))

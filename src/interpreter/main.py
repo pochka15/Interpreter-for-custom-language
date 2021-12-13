@@ -40,6 +40,7 @@ def main():
     parser = RecursiveDescentParser(scanner)
     with open("../../test files/test_file_2.txt") as f:
         tree = parser.parse(f)
+        print(tree.pretty())
         start_node = TreeTransformer().transform(tree)
         debug_transformed_tree(start_node)
 

@@ -40,3 +40,28 @@ def test_return_statement(tree_1: Tree):
     assert node is not None, "node wasn't found"
     assert isinstance(unit, ReturnStatement)
     assert unit.expression is None
+
+
+# TODO(@pochka15): test string representation
+def test_disjunction(self, node):
+    pass
+
+
+# TODO(@pochka15): test string representation
+def test_conjunction(self, node):
+    pass
+
+
+# TODO(@pochka15): test string representation
+def test_equality(self, node):
+    pass
+
+
+# TODO(@pochka15): test members
+def test_additive_expression(self, node):
+    pass
+
+
+# TODO(@pochka15): test members
+def test_prefix_unary_expression(self, node):
+    pass
