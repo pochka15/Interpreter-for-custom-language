@@ -1,10 +1,9 @@
 from lark import Transformer, v_args
 
-from language_units import *
+from interpreter.language_units import *
 
 
 # noinspection PyTypeChecker,PyMethodMayBeStatic,PyPep8Naming
-
 
 @v_args(tree=True)
 class TreeTransformer(Transformer):

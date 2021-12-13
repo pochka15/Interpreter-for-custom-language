@@ -88,8 +88,8 @@ collection_literal: "[" expression ("," expression)* "]" | "[" "]"
 jump_statement: RETURN expression?
   | BREAK
 
-if_expression: "if" expression "{" statements_block "}"
-  | "if" expression "{" statements_block "}" elseif_expression* else_expression?
+if_expression: IF expression "{" statements_block "}"
+  | IF expression "{" statements_block "}" elseif_expression* else_expression?
   
 elseif_expression: ELIF expression "{" statements_block "}"
 
@@ -126,4 +126,5 @@ IN: "in"
 WHILE: "while"
 OR: "or"
 AND: "and"
+IF: "if"
 NAME: /(?!(if|elif|or|and|for|while|true|false|ret|break|else|in|v|c)\b)[a-zA-Z_][a-zA-Z_0-9]*/

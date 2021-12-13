@@ -5,7 +5,7 @@ from typing import List, Any, Iterator, Tuple, TextIO
 
 from lark import Token
 
-from scanner.matchers import RegexMatcher, Matcher, AlternativeMatcher, StringMatcher
+from interpreter.scanner.matchers import Matcher, StringMatcher, RegexMatcher, AlternativeMatcher
 
 MAX_TOKEN_LEN = 255
 DEFAULT_TERMINAL_ENTRIES = (("LEFT_PAREN", '"("'),
@@ -137,6 +137,7 @@ class Scanner:
             if len(candidates) == 1:
                 candidate = candidates[0]
 
+                # noinspection PyArgumentList
                 yield Token(candidate.name,
                             self.last_matched_text,
                             0,

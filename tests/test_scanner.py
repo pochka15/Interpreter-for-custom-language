@@ -1,16 +1,24 @@
 import io
+import os
+from pathlib import Path
 from typing import Optional
 
 import pytest
-from lark import Token
+from lark.lexer import Token
 
-from scanner.scanner import Grammar, Scanner, load_grammar, CandidatesNotFoundException, AmbiguousMatchException
+from interpreter.scanner.scanner import Grammar, Scanner, load_grammar, CandidatesNotFoundException, \
+    AmbiguousMatchException
 
 
 @pytest.fixture
 def grammar() -> Grammar:
-    with open('../../grammar.txt') as f:
+    with open(Path(os.getenv('PROJECT_ROOT')) / "grammar.txt") as f:
         return load_grammar(f)
+
+
+@pytest.fixture
+def root() -> Path:
+    return Path(os.getenv('PROJECT_ROOT'))
 
 
 def find_token(tokens, type_=None, value=None) -> Optional[Token]:
@@ -110,7 +118,7 @@ def test_relative_location(grammar: Grammar):
         tokens = list(Scanner(grammar).iter_tokens(f))
         c = 0
         for token in tokens:
-            if token.type == 'RELATIVE_LOCATION':
+            if token.type == 'DOT':
                 c += 1
         assert c == 2
 
@@ -153,7 +161,7 @@ def test_name(grammar: Grammar):
             assert token.value == expected.value
 
 
-def test_file(grammar: Grammar):
+def test_file(grammar: Grammar, root: Path):
     expected = ["#T", "main", "void", "(", ")", "{", "# constant", "c", "elements", "List", "=", "[", "1", ",", "2",
                 ",", "3", "]", "print_at_even_pos", "(", "elements", ")", "c", "last", "int", "=", "elements", "[",
                 "elements", ".", "size", "(", ")", "-", "1", ")", "]", "print", "(", "elements", ".", "add", "(",
@@ -163,7 +171,7 @@ def test_file(grammar: Grammar):
                 "{", "c", "is_even", "=", "i", "%", "2", "==", "0", "print", "(", "if", "is_even", "{", "toString", "(",
                 "val", ")", "}", "else", "{", '""', "}", ")", "i", "+=", "1", "}", "}"]
     expected_iter = iter(expected)
-    with open('../../test files/test_file_1.txt') as f:
+    with open(root / 'test files' / 'test_file_1.txt') as f:
         for token in Scanner(grammar).iter_tokens(f):
             if token.type != 'NEWLINE':
-                assert next(expected_iter) == token.value
+                assert next(expected_iter) == token.value, "token type: " + token.type

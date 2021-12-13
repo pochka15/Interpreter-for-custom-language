@@ -1,35 +1,30 @@
-from typing import Tuple
+from typing import Tuple, Iterable
 
 import pyperclip
-import pytest
+from lark import Token
 from lark.lark import Tree
 
-from main import iter_tokens
-from parser import RecursiveDescentParser
-from scanner import Scanner, load_grammar
+from interpreter.tree_transformer import TreeTransformer
 
 
-@pytest.fixture(scope="module")
-def parser():
-    with open('../../grammar.txt') as f:
-        grammar = load_grammar(f)
-        return RecursiveDescentParser(Scanner(grammar))
+def transformed(tree: Tree):
+    return TreeTransformer().transform(tree)
 
 
 def clip(tree: Tree):
     pyperclip.copy(str(tree))
 
 
-def trees_comparison_result(expected_tree: Tree, actual_tree: Tree) -> Tuple[bool, str]:
+def compare_trees(expected_tree: Tree, actual_tree: Tree) -> Tuple[bool, str]:
     if not (expected_tree == actual_tree):
         for t1, t2 in zip(expected_tree.iter_subtrees_topdown(), actual_tree.iter_subtrees_topdown()):
             if not t1.data == t2.data:
                 return (False, f'"{t1.data}" is not equal to the "{t2.data}"' + f"""
 Expected tree:
-{expected_tree.make_pretty()}
+{expected_tree.pretty()}
 ------
 Actual tree:
-{actual_tree.make_pretty()}
+{actual_tree.pretty()}
     """)
 
         # When the data is equal compare all the tokens
@@ -42,3 +37,10 @@ Actual tree:
         return (False, "Trees are different!\n"
                        f"Expected tree:\n{expected_tree}\nActual tree:\n{actual_tree}")
     return True, ""
+
+
+def iter_tokens(tree: Tree) -> Iterable[Token]:
+    for t in tree.iter_subtrees_topdown():
+        for child in t.children:
+            if isinstance(child, Token):
+                yield child

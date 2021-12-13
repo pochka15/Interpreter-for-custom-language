@@ -2,8 +2,7 @@ from typing import Iterator, Optional, List, TextIO
 
 from lark import Tree, Token
 
-from scanner.scanner import Scanner
-
+from interpreter.scanner.scanner import Scanner
 
 class UnknownToken(Exception):
     pass
