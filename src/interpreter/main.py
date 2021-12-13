@@ -38,10 +38,16 @@ def main():
         grammar = load_grammar(f)
     scanner = Scanner(grammar)
     parser = RecursiveDescentParser(scanner)
-    with open("../../test files/test_file_1.txt") as f:
+    with open("../../test files/test_file_2.txt") as f:
         tree = parser.parse(f)
         start_node = TreeTransformer().transform(tree)
-        print(start_node.pretty())
+        debug_transformed_tree(start_node)
+
+
+def debug_transformed_tree(tree: Tree):
+    for t in tree.iter_subtrees_topdown():
+        unit = ": " + str(t.unit) if hasattr(t, 'unit') else ""
+        print(f"{t.data}{unit}")
 
 
 def debug_term_defs(grammar):

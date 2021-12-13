@@ -1,4 +1,4 @@
-start: (function_declaration (NEWLINE function_declaration)*)?
+start: function_declaration*
 
 function_declaration: NAME "(" function_parameters ")" function_return_type "{" statements_block "}"
 
@@ -16,14 +16,18 @@ statement: assignment | for_statement | while_statement | expression | jump_stat
 
 variable_declaration: (VAR | CONST) NAME type
 
-statements_block: (statement (NEWLINE statement+)*)?
+// Optional inline
+statements_block: statement*
 
 assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
   | prefix_unary_expression ASSIGNMENT_AND_OPERATOR expression
 
 // Inline
-directly_assignable_expression : postfix_unary_expression assignable_suffix?
+directly_assignable_expression : directly_assignable_expression_a
   | variable_declaration
+
+// Optional inline
+directly_assignable_expression_a: postfix_unary_expression assignable_suffix?
 
 // Inline
 assignable_suffix: indexing_suffix
@@ -36,32 +40,32 @@ while_statement: WHILE expression "{" statements_block "}"
 // Inline
 expression: disjunction
 
-// Inline
+// Optional inline
 disjunction: conjunction (OR conjunction)*
 
-// Inline
+// Optional inline
 conjunction: equality (AND equality)*
 
-// Inline
+// Optional inline
 equality: comparison (EQUALITY_OPERATOR comparison)*
 
-// Inline
+// Optional inline
 comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
 
 function_call_arguments: (expression ("," expression)*)?
 
-// Inline
+// Optional inline
 additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
 
-// Inline
+// Optional inline
 multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
 
-// Inline
+// Optional inline
 prefix_unary_expression: prefix_operator* postfix_unary_expression
 
 prefix_operator: NEGATION | ADDITIVE_OPERATOR
 
-// Inline
+// Optional inline
 postfix_unary_expression: primary_expression postfix_unary_suffix*
 
 // Inline
@@ -85,8 +89,11 @@ identifier: NAME
 
 collection_literal: "[" expression ("," expression)* "]" | "[" "]"
 
-jump_statement: RETURN expression?
+// Inline
+jump_statement: return_statement
   | BREAK
+
+return_statement: RETURN expression?
 
 if_expression: IF expression "{" statements_block "}"
   | IF expression "{" statements_block "}" elseif_expression* else_expression?
@@ -98,17 +105,10 @@ elseif_expression: ELSE  "{" statements_block "}"
 // Inline
 simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
 
+// Don't ignore
 DEC_NUMBER: /0|[1-9][\d_]*/i
-COMMENT: /#[^\r\n]*/
 STRING: LEXER_IMP
-
-//LETTER: /[a-zA-Z]/
-WS: /[ \t\f]/+
-NEWLINE: /[\r\n]/
-
-// Non-terminals
 EQUALITY_OPERATOR: "!=" | "=="
-ASSIGNMENT_OPERATOR: "="
 BOOLEAN: "true" | "false"
 FLOAT_NUMBER: /((\d+\.[\d_]*|\.[\d_]+)(e[-+]?\d+)?|\d+(e[-+]?\d+))/i
 COMPARISON_OPERATOR: "<" | ">" | "<=" | ">="
@@ -116,15 +116,24 @@ ADDITIVE_OPERATOR: "+" | "-"
 NEGATION: "!"
 MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
 ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
+CONST: "c"
+VAR: "v"
+NAME: /(?!(if|elif|or|and|for|while|true|false|ret|break|else|in|v|c)\b)[a-zA-Z_][a-zA-Z_0-9]*/
+
+COMMENT: /#[^\r\n]*/
+
+//LETTER: /[a-zA-Z]/
+WS: /[ \t\f]/+
+NEWLINE: /[\r\n]/
+
+// Non-terminals
+ASSIGNMENT_OPERATOR: "="
 RETURN: "ret"
 BREAK: "break"
 ELSE: "else"
-CONST: "c"
-VAR: "v"
 FOR: "for"
 IN: "in"
 WHILE: "while"
 OR: "or"
 AND: "and"
 IF: "if"
-NAME: /(?!(if|elif|or|and|for|while|true|false|ret|break|else|in|v|c)\b)[a-zA-Z_][a-zA-Z_0-9]*/

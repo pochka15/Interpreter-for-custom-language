@@ -1,8 +1,10 @@
-from typing import Iterator, Optional, List, TextIO
+from typing import List, TextIO
 
 from lark import Tree, Token
 
 from interpreter.scanner.scanner import Scanner
+from interpreter.scanner.tokens_controller import TokensController
+
 
 class UnknownToken(Exception):
     pass
@@ -25,143 +27,140 @@ def match(token: Token, expected_type: str) -> bool:
 class RecursiveDescentParser:
     def __init__(self, scanner: Scanner):
         self.scanner = scanner
-        self.tokens_iterator: Optional[Iterator[Token]] = None
-        self.cached_tokens = []
-        self.peeked_token: Optional[Token] = None
+        self.tokens_controller = TokensController()
 
     def parse(self, file: TextIO) -> Tree:
-        self.tokens_iterator = self.scanner.iter_tokens(file)
+        self.tokens_controller.update_tokens(self.scanner.iter_tokens(file))
         root = self.build_start_node()
-        token = self.next_token()
+        token = self.tokens_controller.next()
         if token is not None:
             raise Exception("Couldn't parse: " + str(token) + "\nExpected no more tokens")
         return root
 
-    # start: (function_declaration (NEWLINE function_declaration)*)?
-    def build_start_node(self) -> Tree:
+    # start: function_declaration*
+    def build_start_node(self):
         children = []
-        if self.peek_token() is not None:
-            first = self.build_function_declaration()
-            rest = self.build_rest_function_declarations()
-            children = [first] + rest
+        while self.tokens_controller.peek() is not None:
+            children.append(self.build_function_declaration())
         return Tree("start", children)
 
-    def build_rest_function_declarations(self) -> List:
-        token = self.next_token()
-        out = []
-        while token is not None:
-            strict_match(token, 'NEWLINE')
-            out.append(self.build_function_declaration())
-            token = self.next_token()
-        return out
-
     # function_declaration: NAME "(" function_parameters ")" function_return_type "{" statements_block "}"
-    def build_function_declaration(self) -> Tree:
-        name = self.next_token()
+    def build_function_declaration(self):
+        name = self.tokens_controller.next()
         strict_match(name, "NAME")
-        strict_match(self.next_token(), "LEFT_PAREN")
-        token = self.peek_token()
+        strict_match(self.tokens_controller.next(), "LEFT_PAREN")
+        token = self.tokens_controller.peek()
         if match(token, "RIGHT_PAREN"):
             function_parameters = Tree("function_parameters", [])
         else:
             function_parameters = self.build_function_parameters()
-        strict_match(self.next_token(), "RIGHT_PAREN")
+        strict_match(self.tokens_controller.next(), "RIGHT_PAREN")
         function_return_type = self.build_function_return_type()
         statements_block = self.build_statements_block()
-        return Tree("function_declaration", [name, function_parameters, function_return_type, statements_block])
+        return Tree("function_declaration", [name,
+                                             function_parameters,
+                                             function_return_type,
+                                             statements_block])
 
     # function_parameters: (function_parameter ("," function_parameter)*)?
-    def build_function_parameters(self) -> Tree:
+    def build_function_parameters(self):
         first = self.build_function_parameter()
         children = [first] + self.build_rest_function_parameters()
         return Tree("function_parameters", children)
 
-    # Inline
-    # function_return_type: NAME
+    # Inline function_return_type: NAME
     def build_function_return_type(self) -> Token:
-        token = self.next_token()
+        token = self.tokens_controller.next()
         strict_match(token, "NAME")
         return token
 
-    # statements_block: (statement (NEWLINE statement+)*)?
-    def build_statements_block(self) -> Tree:
-        strict_match(self.next_token(), "LEFT_CURLY_BR")
+    # Optional inline: statements_block: statement*
+    def build_statements_block(self):
+        strict_match(self.tokens_controller.next(), "LEFT_CURLY_BR")
         children = []
         self.skip_new_lines()
-        if not match(self.peek_token(), "RIGHT_CURLY_BR"):
+        if not match(self.tokens_controller.peek(), "RIGHT_CURLY_BR"):
             first = self.build_statement()
             children = [first] + self.build_rest_statements_block()
             self.skip_new_lines()
-        strict_match(self.next_token(), "RIGHT_CURLY_BR")
+        strict_match(self.tokens_controller.next(), "RIGHT_CURLY_BR")
+        if len(children) == 1:
+            return children[0]
         return Tree("statements_block", children)
-
-    def cache_token(self, token):
-        self.cached_tokens.append(token)
-        return token
-
-    def next_token(self) -> Optional[Token]:
-        try:
-            peeked = self.peeked_token
-            if peeked is not None:
-                self.peeked_token = None
-                return peeked
-            return self.cache_token(next(self.tokens_iterator))
-        except StopIteration:
-            return None
-
-    def peek_token(self):
-        try:
-            peeked = self.peeked_token
-            if peeked is not None:
-                return peeked
-            token = next(self.tokens_iterator)
-            self.peeked_token = token
-            return token
-        except StopIteration:
-            self.peeked_token = None
-            return None
 
     # NAME type
     def build_function_parameter(self) -> Tree:
-        name = self.next_token()
+        name = self.tokens_controller.next()
         strict_match(name, "NAME")
         _type = self.build_type()
         return Tree("function_parameter", [name, _type])
 
     # NAME ("." NAME)*
     def build_type(self) -> Tree:
-        name = self.next_token()
+        name = self.tokens_controller.next()
         strict_match(name, "NAME")
         children = [name]
-        token = self.peek_token()
+        token = self.tokens_controller.peek()
         while token is not None and match(token, "DOT"):
-            name = self.next_token()
+            name = self.tokens_controller.next()
             strict_match(name, "NAME")
             children.append(name)
         return Tree("type", children)
 
     # (comma function_parameter)*
-    def build_rest_function_parameters(self) -> List[Tree]:
+    def build_rest_function_parameters(self) -> List:
         out = []
-        while match(self.peek_token(), "COMMA"):
-            self.next_token()
+        while match(self.tokens_controller.peek(), "COMMA"):
+            self.tokens_controller.next()
             param = self.build_function_parameter()
             out.append(param)
         return out
 
-    def build_statement(self) -> Tree:
-        return self.next_token()
+    # TODO(@pochka15): impl
+    # Inline statement: assignment | for_statement | while_statement | expression | jump_statement
+    def build_statement(self):
+        token = self.tokens_controller.peek()
+        if match(token, "RETURN") or match(token, "BREAK"):
+            return self.build_jump_statement()
+        raise Exception("not implemented")
 
-    def build_rest_statements_block(self) -> List[Tree]:
+    def build_rest_statements_block(self) -> List:
         out = []
-        while self.skip_new_lines() > 0 and not match(self.peek_token(), "RIGHT_CURLY_BR"):
+        while self.skip_new_lines() > 0 and not match(self.tokens_controller.peek(), "RIGHT_CURLY_BR"):
             statement = self.build_statement()
             out.append(statement)
         return out
 
-    def skip_new_lines(self) -> int:
+    # Inline jump_statement: return_expression | BREAK
+    def build_jump_statement(self) -> Tree:
+        if match(self.tokens_controller.peek(), "RETURN"):
+            return self.build_return_statement()
+        token = self.tokens_controller.next()
+        strict_match(token, "BREAK")
+        return token
+
+    # TODO(@pochka15):
+    def build_expression(self) -> Tree:
+        return None
+
+    # return_statement: RETURN expression?
+    def build_return_statement(self):
+        def is_new_line() -> bool:
+            return match(self.tokens_controller.peek(), "NEWLINE")
+
+        strict_match(self.tokens_controller.next(), "RETURN")
+        next_is_new_line = self.tokens_controller.include_new_lines(is_new_line)
+        if not next_is_new_line:
+            children = [self.build_expression()]
+        else:
+            children = []
+        return Tree("return_statement", children)
+
+    def skip_new_lines(self):
+        token = self.tokens_controller.peek()
         counter = 0
-        while match(self.peek_token(), "NEWLINE"):
-            self.next_token()
+        while match(token, "NEWLINE"):
             counter += 1
+            self.tokens_controller.next()
+            token = self.tokens_controller.peek()
         return counter

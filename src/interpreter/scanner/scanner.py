@@ -110,6 +110,7 @@ class AmbiguousMatchException(Exception):
 
 
 class Scanner:
+    chars: Iterator[Any]
 
     def __init__(self, grammar: Grammar, ignore_ws: bool = True):
         self.ignore_ws = ignore_ws
@@ -119,7 +120,6 @@ class Scanner:
         self.start_cursor = Cursor()
         self.cur_text = ''
         self.last_matched_text = ''
-        self.chars = []
         self.no_more_chars = False
 
     def iter_tokens(self, file: TextIO) -> Iterator[Token]:

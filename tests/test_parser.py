@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 import pytest
-from lark import Tree
+from lark import Tree, Token
 
 from interpreter.parser.parser import RecursiveDescentParser
 from interpreter.scanner.scanner import Scanner
@@ -19,12 +19,15 @@ def parser():
 
 
 # noinspection PyTypeChecker
-def test_function_declaration_without_type_parameters(parser: RecursiveDescentParser):
+def test_empty_return(parser: RecursiveDescentParser):
     snippet = r"""
     print() void {
-        return
+        ret
     }"""
+    expected = Tree('start', [Tree('function_declaration',
+                                   [Token('NAME', 'print'), Tree('function_parameters', []), Token('NAME', 'void'),
+                                    Tree('return_expression', [])])])
 
-    expected_tree = Tree()
     with io.StringIO(snippet) as f:
-        compare_trees(expected_tree, parser.parse(f))
+        res, msg = compare_trees(expected, parser.parse(f))
+        assert res, msg

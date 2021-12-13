@@ -4,12 +4,6 @@ import pyperclip
 from lark import Token
 from lark.lark import Tree
 
-from interpreter.tree_transformer import TreeTransformer
-
-
-def transformed(tree: Tree):
-    return TreeTransformer().transform(tree)
-
 
 def clip(tree: Tree):
     pyperclip.copy(str(tree))
