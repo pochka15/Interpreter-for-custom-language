@@ -3,6 +3,8 @@ import re
 from dataclasses import dataclass
 from typing import List, Any, Iterator, Tuple, TextIO
 
+from lark import Token
+
 from scanner.matchers import RegexMatcher, Matcher, AlternativeMatcher, StringMatcher
 
 MAX_TOKEN_LEN = 255
@@ -12,24 +14,14 @@ DEFAULT_TERMINAL_ENTRIES = (("LEFT_PAREN", '"("'),
                             ("RIGHT_CURLY_BR", '"}"'),
                             ("LEFT_SQR_BR", '"["'),
                             ("RIGHT_SQR_BR", '"]"'),
-                            ("COMMA", '","'))
+                            ("COMMA", '","'),
+                            ("DOT", '"."'))
 
 
 @dataclass
 class Grammar:
     rule_defs: List[Any]
     terminal_matchers: List[Matcher]
-
-
-@dataclass
-class Token:
-    type: str = ''
-    value: str = ''
-    line: int = 0
-    column: int = 0
-
-    def __str__(self) -> str:
-        return super().__str__()
 
 
 def iter_terminal_entries(file: TextIO) -> Tuple:
@@ -147,6 +139,7 @@ class Scanner:
 
                 yield Token(candidate.name,
                             self.last_matched_text,
+                            0,
                             self.prev_cursor.line,
                             self.prev_cursor.column)
 
@@ -204,10 +197,3 @@ class Scanner:
         if self.no_more_chars:
             return old + new
         return self.collect_candidates(old + new)
-
-    def match(self):
-        for name, matcher in self.grammar.terminal_matchers:
-            if matcher.matches(self.cur_text):
-                t = Token(type=name, value=self.cur_text)
-                self.cur_text = ''
-                return t

@@ -2,14 +2,18 @@ from typing import Tuple
 
 import pyperclip
 import pytest
-from lark.lark import Lark, Tree
+from lark.lark import Tree
 
-from main import initialize_lark_from_file, iter_tokens
+from main import iter_tokens
+from parser import RecursiveDescentParser
+from scanner import Scanner, load_grammar
 
 
 @pytest.fixture(scope="module")
-def lark() -> Lark:
-    return initialize_lark_from_file('../../grammar.lark')
+def parser():
+    with open('../../grammar.txt') as f:
+        grammar = load_grammar(f)
+        return RecursiveDescentParser(Scanner(grammar))
 
 
 def clip(tree: Tree):

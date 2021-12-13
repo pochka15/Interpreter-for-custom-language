@@ -2,8 +2,9 @@ import io
 from typing import Optional
 
 import pytest
+from lark import Token
 
-from scanner.scanner import Grammar, Scanner, Token, load_grammar, CandidatesNotFoundException, AmbiguousMatchException
+from scanner.scanner import Grammar, Scanner, load_grammar, CandidatesNotFoundException, AmbiguousMatchException
 
 
 @pytest.fixture

@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Union, Optional, TypeVar, Generic
 
-from parser import Tree
-from scanner.scanner import Token
+from lark import Tree, Token
 
 T = TypeVar("T")
 
@@ -55,6 +54,14 @@ class FunctionParameter:
 
 class Statement:
     pass
+
+
+@dataclass
+class StatementsBlock:
+    statements: List[TreeWithLanguageUnit[Statement]]
+
+    def __str__(self):
+        return "\n".join(str(it.unit) for it in self.statements)
 
 
 @dataclass
@@ -183,45 +190,43 @@ class CollectionLiteral(PrimaryExpression):
 @dataclass
 class ForStatement(Statement):
     expression: TreeWithLanguageUnit[Expression]
-    statements_block: List[TreeWithLanguageUnit[Statement]]
+    statements_block: TreeWithLanguageUnit[StatementsBlock]
 
 
 @dataclass
 class WhileStatement(Statement):
     expression: TreeWithLanguageUnit[Expression]
-    statements_block: List[TreeWithLanguageUnit[Statement]]
+    statements_block: TreeWithLanguageUnit[StatementsBlock]
 
 
 @dataclass
 class ElifExpression:
     condition: TreeWithLanguageUnit[Expression]
-    statements_block: List[TreeWithLanguageUnit[Statement]]
+    statements_block: TreeWithLanguageUnit[StatementsBlock]
 
     def __str__(self):
-        return "elif " + \
-               str(self.condition.unit) + \
-               "\n".join(str(it.unit) for it in self.statements_block)
+        return "elif " + str(self.condition.unit) + str(self.statements_block.unit)
 
 
 @dataclass
 class ElseExpression:
-    statements_block: List[TreeWithLanguageUnit[Statement]]
+    statements_block: TreeWithLanguageUnit[StatementsBlock]
 
     def __str__(self):
-        return "\n".join(str(it.unit) for it in self.statements_block)
+        return str(self.statements_block.unit)
 
 
 @dataclass
 class IfExpression(PrimaryExpression):
     condition: TreeWithLanguageUnit[Expression]
-    statements_block: List[TreeWithLanguageUnit[Statement]]
+    statements_block: TreeWithLanguageUnit[StatementsBlock]
     elif_expressions: List[TreeWithLanguageUnit[ElifExpression]]
     optional_else: Optional[TreeWithLanguageUnit[ElseExpression]]
 
     def __str__(self):
         else_str = "" if self.optional_else == None else str(self.optional_else.unit)
         return "if " + str(self.condition.unit) \
-               + " {\n" + "\n".join(str(it.unit) for it in self.statements_block) \
+               + " {\n" + str(self.statements_block.unit) \
                + "\n}\n" + "\n".join(str(it.unit) for it in self.elif_expressions) + else_str
 
 
@@ -275,13 +280,22 @@ class FunctionDeclaration:
     name: TokenWithLanguageUnit[str]
     function_parameters: List[TreeWithLanguageUnit[FunctionParameter]]
     return_type: TokenWithLanguageUnit[str]
-    statements_block: List[TreeWithLanguageUnit[Statement]]
+    statements_block: TreeWithLanguageUnit[StatementsBlock]
+
+
+def __str__(self):
+    return str(self.name.unit) + \
+           "(" + ", ".join(str(it.unit) for it in self.function_parameters) + ")" + \
+           str(self.return_type.unit) + \
+           " {\n" + str(self.statements_block.unit) + "\n}"
+
+
+@dataclass
+class Start:
+    function_declarations: List[TreeWithLanguageUnit[FunctionDeclaration]]
 
     def __str__(self):
-        return str(self.name.unit) + \
-               "(" + ", ".join(str(it.unit) for it in self.function_parameters) + ")" + \
-               str(self.return_type.unit) + \
-               " {\n" + "\n".join(str(it.unit) for it in self.statements_block) + "\n}"
+        return "\n".join(str(it.unit) for it in self.function_declarations)
 
 
 @dataclass

@@ -1,17 +1,15 @@
 start: (function_declaration (NEWLINE function_declaration)*)?
 
-function_declaration: NAME "(" function_parameters ")" function_return_type? "{" statements_block "}"
+function_declaration: NAME "(" function_parameters ")" function_return_type "{" statements_block "}"
 
 function_parameters: (function_parameter ("," function_parameter)*)?
 
+// Inline
 function_return_type: NAME
 
 function_parameter: NAME type
 
-type: simple_type ("." simple_type)*
-
-// Inline
-simple_type: NAME
+type: NAME ("." NAME)*
 
 // Inline
 statement: assignment | for_statement | while_statement | expression | jump_statement
@@ -118,7 +116,6 @@ ADDITIVE_OPERATOR: "+" | "-"
 NEGATION: "!"
 MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
 ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
-RELATIVE_LOCATION: /\.+/
 RETURN: "ret"
 BREAK: "break"
 ELSE: "else"
