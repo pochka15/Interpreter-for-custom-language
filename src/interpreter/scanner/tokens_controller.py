@@ -13,8 +13,8 @@ def match(token: Token, expected_type: str) -> bool:
 
 class TokensController:
     def __init__(self):
-        self.should_ignore_new_lines = True
         self.tokens = iter([])
+        self.should_ignore_new_lines = True
         self.peeked_tokens = CustomQueue()
         self.cached_tokens = []
 
@@ -67,8 +67,11 @@ class TokensController:
         else:
             return inner_peek()
 
-    def update_tokens(self, tokens: Iterator[Token]):
+    def reload(self, tokens: Iterator[Token]):
         self.tokens = tokens
+        self.should_ignore_new_lines = True
+        self.peeked_tokens = CustomQueue()
+        self.cached_tokens = []
 
     # Ugly utility method for the should_ignore_new_lines()
     def _skip_all_new_lines(self):

@@ -16,18 +16,10 @@ statement: assignment | for_statement | while_statement | expression | jump_stat
 
 variable_declaration: (VAR | CONST) NAME type
 
-// Optional inline
 statements_block: statement*
 
-assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
+assignment: variable_declaration ASSIGNMENT_OPERATOR expression
   | prefix_unary_expression ASSIGNMENT_AND_OPERATOR expression
-
-// Inline
-directly_assignable_expression : directly_assignable_expression_a
-  | variable_declaration
-
-// Optional inline
-directly_assignable_expression_a: postfix_unary_expression assignable_suffix?
 
 // Inline
 assignable_suffix: indexing_suffix
@@ -101,7 +93,7 @@ if_expression: IF expression "{" statements_block "}"
   
 elseif_expression: ELIF expression "{" statements_block "}"
 
-elseif_expression: ELSE  "{" statements_block "}" 
+else_expression: ELSE "{" statements_block "}"
 
 // Inline
 simple_literal: STRING | BOOLEAN | DEC_NUMBER | FLOAT_NUMBER
@@ -132,6 +124,7 @@ ASSIGNMENT_OPERATOR: "="
 RETURN: "ret"
 BREAK: "break"
 ELSE: "else"
+ELIF: "elif"
 FOR: "for"
 IN: "in"
 WHILE: "while"

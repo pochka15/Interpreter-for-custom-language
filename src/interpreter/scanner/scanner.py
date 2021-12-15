@@ -112,7 +112,8 @@ class AmbiguousMatchException(Exception):
 class Scanner:
     chars: Iterator[Any]
 
-    def __init__(self, grammar: Grammar, ignore_ws: bool = True):
+    def __init__(self, grammar: Grammar, ignore_ws: bool = True, ignore_comments: bool = True):
+        self.ignore_comments = ignore_comments
         self.ignore_ws = ignore_ws
         self.grammar = grammar
         self.end_cursor = Cursor()
@@ -158,11 +159,11 @@ class Scanner:
         self.move()
         if not self.no_more_chars:
             for x in inner():
-                if self.ignore_ws:
-                    if not x.type == 'WS':
-                        yield x
-                else:
-                    yield x
+                if self.ignore_comments and x.type == 'COMMENT':
+                    continue
+                if self.ignore_ws and x.type == 'WS':
+                    continue
+                yield x
 
     def move(self):
         try:

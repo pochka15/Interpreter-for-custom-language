@@ -75,7 +75,7 @@ def test_comment_and_multiline_positions(grammar: Grammar):
 c a int = 5
     """
     with io.StringIO(s) as f:
-        for token in Scanner(grammar).iter_tokens(f):
+        for token in Scanner(grammar, ignore_comments=False).iter_tokens(f):
             if token.type == 'COMMENT':
                 assert token.line == 1
                 assert token.column == 9
@@ -150,6 +150,7 @@ def test_ambiguous_grammar(grammar: Grammar):
                 list(Scanner(load_grammar(gr)).iter_tokens(f))
 
 
+# noinspection PyTypeChecker
 def test_name(grammar: Grammar):
     s = 'Hello'
     tokens = [Token('NAME', 'Hello')]
@@ -159,19 +160,3 @@ def test_name(grammar: Grammar):
             expected = next(iterator)
             assert token.type == expected.type
             assert token.value == expected.value
-
-
-def test_file(grammar: Grammar, root: Path):
-    expected = ["#T", "main", "void", "(", ")", "{", "# constant", "c", "elements", "List", "=", "[", "1", ",", "2",
-                ",", "3", "]", "print_at_even_pos", "(", "elements", ")", "c", "last", "int", "=", "elements", "[",
-                "elements", ".", "size", "(", ")", "-", "1", ")", "]", "print", "(", "elements", ".", "add", "(",
-                "add_one", "(", "last", ")", ")", ")", "}", "tmp", "void", "(", ")", "{", "ret", '"hello"', "}",
-                "add_one", "int", "(", "element", "int", ")", "{", "ret", "element", "+", "1", "}", "print_at_even_pos",
-                "void", "(", "elements", "List", ")", "{", "v", "i", "int", "=", "0", "for", "val", "in", "elements",
-                "{", "c", "is_even", "=", "i", "%", "2", "==", "0", "print", "(", "if", "is_even", "{", "toString", "(",
-                "val", ")", "}", "else", "{", '""', "}", ")", "i", "+=", "1", "}", "}"]
-    expected_iter = iter(expected)
-    with open(root / 'test files' / 'test_file_1.txt') as f:
-        for token in Scanner(grammar).iter_tokens(f):
-            if token.type != 'NEWLINE':
-                assert next(expected_iter) == token.value, "token type: " + token.type
