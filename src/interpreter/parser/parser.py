@@ -10,12 +10,17 @@ class UnexpectedToken(Exception):
     pass
 
 
+class PrimaryExpressionException(Exception):
+    pass
+
+
 def strict_match(token: Token, expected_type: str, err_msg: str = "") -> bool:
     if token is None:
         raise Exception("Tried to match None token")
     if token.type != expected_type:
         raise UnexpectedToken(
-            f"Unexpected token type found: {token} ({token.line}:{token.column}), expected to see: {expected_type}\n{err_msg}")
+            f"Unexpected token type found: {token} ({token.line}:{token.column}), "
+            f"expected to see: {expected_type}\n{err_msg}")
     return True
 
 
@@ -339,7 +344,7 @@ class RecursiveDescentParser:
             return self.build_if_expression()
 
         token = self.tokens_controller.peek()
-        raise Exception(f"Primary expression cannot start with token: '{token}' ({token.type})")
+        raise PrimaryExpressionException(f"Primary expression cannot start with token: '{token}' ({token.type})")
 
     def try_to_build_simple_literal(self):
         simple_literal_token_types = ["STRING", "BOOLEAN", "DEC_NUMBER", "FLOAT_NUMBER"]

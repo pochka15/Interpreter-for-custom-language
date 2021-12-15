@@ -6,7 +6,7 @@ import pytest
 from lark import Tree, Token
 
 from interpreter.main import load_grammar
-from interpreter.parser.parser import RecursiveDescentParser
+from interpreter.parser.parser import RecursiveDescentParser, UnexpectedToken, PrimaryExpressionException
 from interpreter.scanner.scanner import Scanner
 from tests.utilities import compare_trees
 
@@ -608,3 +608,43 @@ def test_wile_stmt(parser: RecursiveDescentParser):
     with io.StringIO(snippet) as f:
         res, msg = compare_trees(expected, parser.parse(f))
         assert res, msg
+
+
+# noinspection PyTypeChecker
+def test_func_without_return_type_exceptional(parser: RecursiveDescentParser):
+    snippet = r"""
+        test() { ret a or b }"""
+
+    with io.StringIO(snippet) as f:
+        with pytest.raises(UnexpectedToken):
+            parser.parse(f)
+
+
+def test_for_without_in_exceptional(parser: RecursiveDescentParser):
+    snippet = r"""
+        test() {
+          for i range(10) { print(i) }
+        }"""
+
+    with io.StringIO(snippet) as f:
+        with pytest.raises(UnexpectedToken):
+            parser.parse(f)
+
+
+def test_type_with_comma_instead_of_dot_exceptional(parser: RecursiveDescentParser):
+    snippet = r"""
+        test() void { ret a,b }"""
+
+    with io.StringIO(snippet) as f:
+        with pytest.raises(PrimaryExpressionException):
+            parser.parse(f)
+
+
+# noinspection PyTypeChecker
+def test_not_matched_parentheses_exceptional(parser: RecursiveDescentParser):
+    snippet = r"""
+        test() void { ret (a(b)(k }"""
+
+    with io.StringIO(snippet) as f:
+        with pytest.raises(UnexpectedToken):
+            parser.parse(f)
