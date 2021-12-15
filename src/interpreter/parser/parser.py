@@ -1,4 +1,4 @@
-from typing import List, TextIO
+from typing import List, TextIO, Optional
 
 from lark import Tree, Token
 
@@ -128,11 +128,11 @@ class RecursiveDescentParser:
         else:
             if match(token, "VAR") or match(token, "CONST"):
                 return self.build_assignment()
-            # TODO(@pochka15): Here conflict occurs. I assume that assignment starts with the variable declaration
-            # assignment can start with the prefix_unary_expression
-            # and we should deduce whether it's an expression or an assignment
             else:
-                return self.build_expression()
+                expression = self.build_prefix_unary_expression()
+                if match(self.tokens_controller.peek(), "ASSIGNMENT_AND_OPERATOR"):
+                    return self.build_assignment(expression)
+                return self.build_expression(expression)
 
     # Inline jump_statement: return_expression | BREAK
     def build_jump_statement(self) -> Tree:
@@ -143,8 +143,8 @@ class RecursiveDescentParser:
         return token
 
     # Inline expression: disjunction
-    def build_expression(self) -> Tree:
-        return self.build_disjunction()
+    def build_expression(self, prebuilt_prefix_unary_expression: Optional = None) -> Tree:
+        return self.build_disjunction(prebuilt_prefix_unary_expression)
 
     # return_statement: RETURN expression?
     def build_return_statement(self):
@@ -170,8 +170,8 @@ class RecursiveDescentParser:
 
     # // Optional inline
     # disjunction: conjunction (OR conjunction)*
-    def build_disjunction(self):
-        children = [self.build_conjunction()]
+    def build_disjunction(self, prebuilt_prefix_unary_expression: Optional = None):
+        children = [self.build_conjunction(prebuilt_prefix_unary_expression)]
         while match(self.tokens_controller.peek(), "OR"):
             self.tokens_controller.next()
             children.append(self.build_conjunction())
@@ -182,8 +182,8 @@ class RecursiveDescentParser:
 
     # // Optional inline
     # conjunction: equality (AND equality)*
-    def build_conjunction(self):
-        children = [self.build_equality()]
+    def build_conjunction(self, prebuilt_prefix_unary_expression: Optional = None):
+        children = [self.build_equality(prebuilt_prefix_unary_expression)]
         while match(self.tokens_controller.peek(), "AND"):
             self.tokens_controller.next()
             children.append(self.build_equality())
@@ -194,8 +194,8 @@ class RecursiveDescentParser:
 
     # // Optional inline
     # equality: comparison (EQUALITY_OPERATOR comparison)*
-    def build_equality(self):
-        children = [self.build_comparison()]
+    def build_equality(self, prebuilt_prefix_unary_expression: Optional = None):
+        children = [self.build_comparison(prebuilt_prefix_unary_expression)]
         while match(self.tokens_controller.peek(), "EQUALITY_OPERATOR"):
             children.append(self.tokens_controller.next())
             children.append(self.build_comparison())
@@ -206,8 +206,8 @@ class RecursiveDescentParser:
 
     # // Optional inline
     # comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
-    def build_comparison(self):
-        children = [self.build_additive_expression()]
+    def build_comparison(self, prebuilt_prefix_unary_expression: Optional = None):
+        children = [self.build_additive_expression(prebuilt_prefix_unary_expression)]
         while match(self.tokens_controller.peek(), "COMPARISON_OPERATOR"):
             children.append(self.tokens_controller.next())
             children.append(self.build_additive_expression())
@@ -218,8 +218,8 @@ class RecursiveDescentParser:
 
     # // Optional inline
     # additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
-    def build_additive_expression(self):
-        children = [self.build_multiplicative_expression()]
+    def build_additive_expression(self, prebuilt_prefix_unary_expression: Optional = None):
+        children = [self.build_multiplicative_expression(prebuilt_prefix_unary_expression)]
         while match(self.tokens_controller.peek(), "ADDITIVE_OPERATOR"):
             children.append(self.tokens_controller.next())
             children.append(self.build_multiplicative_expression())
@@ -230,8 +230,9 @@ class RecursiveDescentParser:
 
     # // Optional inline
     # multiplicative_expression: prefix_unary_expression (MULTIPLICATIVE_OPERATOR prefix_unary_expression)*
-    def build_multiplicative_expression(self):
-        children = [self.build_prefix_unary_expression()]
+    def build_multiplicative_expression(self, prebuilt_prefix_unary_expression: Optional = None):
+        x = prebuilt_prefix_unary_expression
+        children = [x if x is not None else self.build_prefix_unary_expression()]
         while match(self.tokens_controller.peek(), "MULTIPLICATIVE_OPERATOR"):
             children.append(self.tokens_controller.next())
             children.append(self.build_prefix_unary_expression())
@@ -356,7 +357,7 @@ class RecursiveDescentParser:
 
     # assignment: variable_declaration ASSIGNMENT_OPERATOR expression
     #   | prefix_unary_expression ASSIGNMENT_AND_OPERATOR expression
-    def build_assignment(self):
+    def build_assignment(self, prebuilt_prefix_unary_expression: Optional = None):
         token = self.tokens_controller.peek()
         if match(token, "VAR") or match(token, "CONST"):
             variable_declaration = self.build_variable_declaration()
@@ -364,7 +365,8 @@ class RecursiveDescentParser:
             expression = self.build_expression()
             return Tree("assignment", [variable_declaration, expression])
         else:
-            prefix_expression = self.build_prefix_unary_expression()
+            x = prebuilt_prefix_unary_expression
+            prefix_expression = x if x is not None else self.build_prefix_unary_expression()
             operator = self.tokens_controller.next()
             strict_match(operator, "ASSIGNMENT_AND_OPERATOR")
             expression = self.build_expression()

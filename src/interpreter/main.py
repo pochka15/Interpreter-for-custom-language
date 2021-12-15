@@ -3,10 +3,9 @@ from typing import Iterable
 from lark import Lark, Tree
 from lark.lexer import Token
 
+from interpreter.code_snippet_generation import with_italic_comments, with_pre_tag, with_bold_keywords
 from interpreter.parser.parser import RecursiveDescentParser
 from interpreter.scanner.scanner import load_grammar, Scanner
-from interpreter.tree_transformer import TreeTransformer
-from interpreter.code_snippet_generation import with_italic_comments, with_pre_tag, with_bold_keywords
 
 
 def initialize_lark_from_file(relative_path_to_file: str) -> Lark:
@@ -38,11 +37,11 @@ def main():
         grammar = load_grammar(f)
     scanner = Scanner(grammar)
     parser = RecursiveDescentParser(scanner)
-    with open("../../test files/test_file_2.txt") as f:
+    with open("../../test files/test_file_1.txt") as f:
         tree = parser.parse(f)
         print(tree.pretty())
-        start_node = TreeTransformer().transform(tree)
-        debug_transformed_tree(start_node)
+        # start_node = TreeTransformer().transform(tree)
+        # debug_transformed_tree(start_node)
 
 
 def debug_transformed_tree(tree: Tree):
