@@ -48,12 +48,12 @@ disjunction: conjunction ("||" conjunction)*
 conjunction: equality ("&&" equality)*
 
 // Hide
-equality: comparison (EQUALITY_OPERATOR comparison)*
+equality: comparison (EQUALITY_OPERATOR comparison)?
 
 // Hide
 comparison: additive_expression (COMPARISON_OPERATOR additive_expression)*
 
-function_call_arguments: (expression ("," expression)*)?
+function_call_arguments: expression ("," expression)*
 
 // Hide
 additive_expression: multiplicative_expression (ADDITIVE_OPERATOR multiplicative_expression)*
@@ -70,7 +70,7 @@ postfix_unary_expression: primary_expression postfix_unary_suffix*
 // Hide
 postfix_unary_suffix: call_suffix | indexing_suffix | navigation_suffix
 
-call_suffix: "(" function_call_arguments ")"
+call_suffix: "(" function_call_arguments? ")"
 
 indexing_suffix: "[" expression "]"
 

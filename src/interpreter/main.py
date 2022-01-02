@@ -6,6 +6,7 @@ from lark.lexer import Token
 from interpreter.code_snippet_generation import with_italic_comments, with_pre_tag, with_bold_keywords
 from interpreter.parser.parser import RecursiveDescentParser
 from interpreter.scanner.scanner import load_grammar, Scanner
+from interpreter.tree_transformer import TreeTransformer
 
 
 def initialize_lark_from_file(relative_path_to_file: str) -> Lark:
@@ -39,15 +40,9 @@ def main():
     parser = RecursiveDescentParser(scanner)
     with open("../../test files/test_file_1.txt") as f:
         tree = parser.parse(f)
-        print(tree.pretty())
-        # start_node = TreeTransformer().transform(tree)
-        # debug_transformed_tree(start_node)
-
-
-def debug_transformed_tree(tree: Tree):
-    for t in tree.iter_subtrees_topdown():
-        unit = ": " + str(t.unit) if hasattr(t, 'unit') else ""
-        print(f"{t.data}{unit}")
+        # print(tree.pretty())
+        tree_ = TreeTransformer().transform(tree)
+        print(str(tree_.unit))
 
 
 def debug_term_defs(grammar):

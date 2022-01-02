@@ -1,11 +1,11 @@
 #T
 main () void {
     # constant
-    c elements List = [1, 2, 3]
+    let elements List = [1, 2, 3]
 
     print_at_even_pos(elements)
     
-    c last int = elements[elements.size() - 1]
+    let last int = elements[elements.size() - 1]
     print(elements.add(add_one(last)))
 }
 
@@ -18,9 +18,9 @@ add_one (element int) int {
 }
 
 print_at_even_pos (elements List) void {
-    v i int = 0
+    var i int = 0
     for val in elements {
-        c is_even bool = i % 2 == 0
+        let is_even bool = i % 2 == 0
         print(if is_even { toString(val) } else { "" })
         i += 1
     }

@@ -1,9 +1,16 @@
 from dataclasses import dataclass
+from textwrap import indent
 from typing import List, Union, Optional, TypeVar, Generic
 
 from lark import Tree, Token
 
 T = TypeVar("T")
+
+
+def curly_block(inner: str, indentation_level=1):
+    indentation = ' ' * 4 * indentation_level
+    last_indentation = ' ' * (indentation_level - 1)
+    return "{\n" + indent(inner, indentation) + "\n" + last_indentation + "}"
 
 
 class TreeWithLanguageUnit(Tree, Generic[T]):
@@ -48,16 +55,16 @@ class SimpleLiteral(PrimaryExpression):
                  TokenAndLanguageUnit[float]]
 
     def __str__(self):
-        return str(self.value)
+        return str(self.value.unit)
 
 
 @dataclass
 class FunctionParameter:
-    name: str
+    name: TokenAndLanguageUnit[str]
     type: TokenAndLanguageUnit[Type]
 
     def __str__(self):
-        return f"{self.name} {str(self.type.unit)}"
+        return f"{self.name.unit} {self.type.unit}"
 
 
 class Statement:
@@ -73,22 +80,15 @@ class StatementsBlock:
 
 
 @dataclass
-class BreakStatement:
-    def __init__(self):
-        self.value = "break"
-
-    def __str__(self):
-        return self.value
-
-
-@dataclass
 class VariableDeclaration:
+    var_or_let: TokenAndLanguageUnit[str]
     variable_name: TokenAndLanguageUnit[str]
     type: TreeWithLanguageUnit[Type]
-    var_or_const: TokenAndLanguageUnit[str]
 
-    def __repr__(self):
-        return " ".join([str(self.var_or_const.unit), str(self.variable_name.unit), str(self.type.unit)])
+    def __str__(self):
+        return " ".join([str(self.var_or_let.unit),
+                         str(self.variable_name.unit),
+                         str(self.type.unit)])
 
 
 @dataclass
@@ -103,8 +103,8 @@ class PostfixUnaryExpression:
     suffixes: List[TreeWithLanguageUnit[PostfixUnarySuffix]]
 
     def __str__(self):
-        return "".join(
-            (str(self.primary_expression), *(str(suf.unit) for suf in self.suffixes)))
+        suffixes = "".join(str(suf.unit) for suf in self.suffixes)
+        return str(self.primary_expression.unit) + suffixes
 
 
 @dataclass
@@ -113,41 +113,36 @@ class PrefixUnaryExpression:
     postfix_unary_expression: LanguageUnitContainer
 
     def __str__(self):
-        operator = "" if self.prefix_operator is None else self.prefix_operator.token
+        operator = "" if self.prefix_operator is None else self.prefix_operator
         return operator + str(self.postfix_unary_expression.unit)
 
 
 @dataclass
 class MultiplicativeExpression:
-    prefix_unary_expression: TreeWithLanguageUnit[PrefixUnaryExpression]
-    multiplicative_operators_and_prefix_unary_expressions: List[
+    children: List[
         Union[TokenAndLanguageUnit[str], TreeWithLanguageUnit[PrefixUnaryExpression]]]
 
     def __str__(self):
-        return " ".join([str(self.prefix_unary_expression.unit),
-                         *(str(el.unit) for el in self.multiplicative_operators_and_prefix_unary_expressions)])
+        return " ".join((str(el.unit) for el in self.children))
 
 
 @dataclass
 class AdditiveExpression:
-    multiplicative_expression: LanguageUnitContainer
-    right_part: List[
+    children: List[
         Union[TokenAndLanguageUnit[str], LanguageUnitContainer]]
 
     def __str__(self):
-        left = str(self.multiplicative_expression.unit)
-        right = " ".join((str(exp.unit) for exp in self.right_part))
-        return left + " " + right
+        return " ".join((str(it.unit) for it in self.children))
 
 
 @dataclass
 class Comparison:
-    additive_expressions_and_operators: List[Union[
+    children: List[Union[
         TreeWithLanguageUnit[AdditiveExpression],
-        TreeWithLanguageUnit[TokenAndLanguageUnit[str]]]]
+        TreeWithLanguageUnit[TokenAndLanguageUnit]]]
 
     def __str__(self):
-        return " ".join(str(exp.unit) for exp in self.additive_expressions_and_operators)
+        return " ".join(str(it.unit) for it in self.children)
 
 
 @dataclass
@@ -197,8 +192,13 @@ class CollectionLiteral(PrimaryExpression):
 
 @dataclass
 class ForStatement(Statement):
+    name: TokenAndLanguageUnit[str]
     expression: TreeWithLanguageUnit[Expression]
     statements_block: TreeWithLanguageUnit[StatementsBlock]
+
+    def __str__(self):
+        return f"for {self.name.unit} in {self.expression.unit} " \
+               + curly_block(str(self.statements_block.unit))
 
 
 @dataclass
@@ -208,20 +208,20 @@ class WhileStatement(Statement):
 
 
 @dataclass
-class ElifExpression:
-    condition: TreeWithLanguageUnit[Expression]
-    statements_block: TreeWithLanguageUnit[StatementsBlock]
-
-    def __str__(self):
-        return "elif " + str(self.condition.unit) + str(self.statements_block.unit)
-
-
-@dataclass
 class ElseExpression:
     statements_block: TreeWithLanguageUnit[StatementsBlock]
 
     def __str__(self):
-        return str(self.statements_block.unit)
+        return 'else ' + curly_block(str(self.statements_block.unit))
+
+
+@dataclass
+class ElseIfExpression:
+    condition: TreeWithLanguageUnit[Expression]
+    statements_block: TreeWithLanguageUnit[StatementsBlock]
+
+    def __str__(self):
+        return f'elif {self.condition.unit}' + curly_block(str(self.statements_block.unit))
 
 
 @dataclass
@@ -233,9 +233,8 @@ class IfExpression(PrimaryExpression):
 
     def __str__(self):
         else_str = "" if self.optional_else is None else str(self.optional_else.unit)
-        return "if " + str(self.condition.unit) \
-               + " {\n" + str(self.statements_block.unit) \
-               + "\n}\n" + "\n".join(str(it.unit) for it in self.elif_expressions) + else_str
+        return "if " + str(self.condition.unit) + " " + curly_block(str(self.statements_block.unit)) + \
+               " " + "\n".join(str(it.unit) for it in self.elif_expressions) + else_str
 
 
 @dataclass
@@ -243,16 +242,7 @@ class IndexingSuffix(PostfixUnarySuffix):
     expression: TreeWithLanguageUnit[Expression]
 
     def __str__(self):
-        "[" + str(self.expression.unit) + "]"
-
-
-@dataclass
-class CallSuffix(PostfixUnarySuffix):
-    expressions: List[LanguageUnitContainer]
-
-    def __str__(self):
-        inner = ", ".join(str(e.unit) for e in self.expressions)
-        return "(" + inner + ")"
+        return "[" + str(self.expression.unit) + "]"
 
 
 @dataclass
@@ -264,25 +254,14 @@ class NavigationSuffix(PostfixUnarySuffix):
 
 
 @dataclass
-class DirectlyAssignableExpression:
-    expression: Union[TreeWithLanguageUnit[VariableDeclaration],
-                      TreeWithLanguageUnit[PostfixUnaryExpression]]
-    assignable_suffix: Optional[Union[
-        TreeWithLanguageUnit[IndexingSuffix],
-        TreeWithLanguageUnit[NavigationSuffix]]]
-
-    def __str__(self):
-        suffix = self.assignable_suffix.unit
-        suffix = suffix if suffix is not None else ""
-        return f"{self.expression.unit}{suffix}"
-
-
-@dataclass
 class ReturnStatement:
     expression: Optional[TreeWithLanguageUnit]
 
     def __str__(self):
-        return "ret ..."
+        if self.expression is None:
+            return "ret"
+        else:
+            return f"ret {self.expression.unit}"
 
 
 @dataclass
@@ -293,7 +272,10 @@ class FunctionDeclaration:
     statements_block: TreeWithLanguageUnit[StatementsBlock]
 
     def __str__(self):
-        return self.name.unit + " ( ... ) " + self.return_type.unit + " { ... }"
+        parameters = " ".join(str(x.unit) for x in self.function_parameters)
+        parentheses = "()" if parameters == '' else "(" + parameters + ")"
+        return self.name.unit + parentheses + " " + self.return_type.unit + " " + curly_block(
+            str(self.statements_block.unit))
 
 
 @dataclass
@@ -301,13 +283,12 @@ class Start:
     function_declarations: List[LanguageUnitContainer]
 
     def __str__(self):
-        return "start"
+        return "\n\n".join(str(it.unit) for it in self.function_declarations)
 
 
 @dataclass
 class Assignment(Statement):
-    left: Union[TreeWithLanguageUnit[DirectlyAssignableExpression],
-                TreeWithLanguageUnit[PrefixUnaryExpression]]
+    left: LanguageUnitContainer
     operator: TokenAndLanguageUnit[str]
     right: TreeWithLanguageUnit[Expression]
 
@@ -316,8 +297,18 @@ class Assignment(Statement):
 
 
 @dataclass
-class JumpStatement(Statement):
-    value: Union[TreeWithLanguageUnit[ReturnStatement], TokenAndLanguageUnit[str]]
+class FunctionCallArguments(PostfixUnarySuffix):
+    expressions: List[LanguageUnitContainer]
 
     def __str__(self):
-        return str(self.value.unit)
+        return ", ".join(str(e.unit) for e in self.expressions)
+
+
+@dataclass
+class CallSuffix(PostfixUnarySuffix):
+    function_call_arguments: Optional[LanguageUnitContainer] = None
+
+    def __str__(self):
+        if self.function_call_arguments is None:
+            return "()"
+        return "(" + str(self.function_call_arguments.unit) + ")"

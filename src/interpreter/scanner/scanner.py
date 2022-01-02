@@ -6,16 +6,17 @@ from typing import List, Any, Iterator, Tuple, TextIO
 from lark import Token
 
 from interpreter.scanner.matchers import Matcher, StringMatcher, RegexMatcher, AlternativeMatcher
+from interpreter.scanner.tokens import Token as Tk
 
 MAX_TOKEN_LEN = 255
-DEFAULT_TERMINAL_ENTRIES = (("LEFT_PAREN", '"("'),
-                            ("RIGHT_PAREN", '")"'),
-                            ("LEFT_CURLY_BR", '"{"'),
-                            ("RIGHT_CURLY_BR", '"}"'),
-                            ("LEFT_SQR_BR", '"["'),
-                            ("RIGHT_SQR_BR", '"]"'),
-                            ("COMMA", '","'),
-                            ("DOT", '"."'))
+DEFAULT_TERMINAL_ENTRIES = ((Tk.LEFT_PAREN.name, '"("'),
+                            (Tk.RIGHT_PAREN.name, '")"'),
+                            (Tk.LEFT_CURLY_BR.name, '"{"'),
+                            (Tk.RIGHT_CURLY_BR.name, '"}"'),
+                            (Tk.LEFT_SQR_BR.name, '"["'),
+                            (Tk.RIGHT_SQR_BR.name, '"]"'),
+                            (Tk.COMMA.name, '","'),
+                            (Tk.DOT.name, '"."'))
 
 
 @dataclass
@@ -159,9 +160,9 @@ class Scanner:
         self.move()
         if not self.no_more_chars:
             for x in inner():
-                if self.ignore_comments and x.type == 'COMMENT':
+                if self.ignore_comments and x.type == Tk.COMMENT.name:
                     continue
-                if self.ignore_ws and x.type == 'WS':
+                if self.ignore_ws and x.type == Tk.WS.name:
                     continue
                 yield x
 
