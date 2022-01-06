@@ -77,7 +77,7 @@ indexing_suffix: "[" expression "]"
 navigation_suffix: "." NAME
 
 // Hide
-primary_expression: "(" expression ")"
+primary_expression: parenthesized_expression
   | identifier
   | simple_literal
   | collection_literal

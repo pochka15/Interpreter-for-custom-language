@@ -5,17 +5,15 @@ from pathlib import Path
 import pytest
 from lark import Tree, Token
 
-from interpreter.main import load_grammar
 from interpreter.parser.parser import RecursiveDescentParser, UnexpectedToken, PrimaryExpressionException
 from interpreter.scanner.scanner import Scanner
 from tests.utilities import compare_trees
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def parser():
     with open(Path(os.getenv('PROJECT_ROOT')) / 'grammar.txt') as f:
-        grammar = load_grammar(f)
-        return RecursiveDescentParser(Scanner(grammar))
+        return RecursiveDescentParser(Scanner(f.read()))
 
 
 # noinspection PyTypeChecker
@@ -346,7 +344,8 @@ def test_parenthesized_expression(parser: RecursiveDescentParser):
         test() int { ret (a) }"""
     expected = Tree('start', [Tree('function_declaration',
                                    [Token('NAME', 'test'), Tree('function_parameters', []), Token('NAME', 'int'),
-                                    Tree('statements_block', [Tree('return_statement', [Token('NAME', 'a')])])])])
+                                    Tree('statements_block', [Tree('return_statement', [
+                                        Tree('parenthesized_expression', [Token('NAME', 'a')])])])])])
 
     with io.StringIO(snippet) as f:
         res, msg = compare_trees(expected, parser.parse(f))
@@ -359,12 +358,17 @@ def test_parenthesized_expression2(parser: RecursiveDescentParser):
         test() int { ret ((a + b)) }"""
     expected = Tree('start', [Tree('function_declaration',
                                    [Token('NAME', 'test'), Tree('function_parameters', []), Token('NAME', 'int'),
-                                    Tree('statements_block', [Tree('return_statement', [Tree('additive_expression',
-                                                                                             [Token('NAME', 'a'),
-                                                                                              Token('ADDITIVE_OPERATOR',
-                                                                                                    '+'),
-                                                                                              Token('NAME',
-                                                                                                    'b')])])])])])
+                                    Tree('statements_block', [Tree('return_statement', [Tree('parenthesized_expression',
+                                                                                             [Tree(
+                                                                                                 'parenthesized_expression',
+                                                                                                 [Tree(
+                                                                                                     'additive_expression',
+                                                                                                     [Token('NAME',
+                                                                                                            'a'), Token(
+                                                                                                         'ADDITIVE_OPERATOR',
+                                                                                                         '+'),
+                                                                                                      Token('NAME',
+                                                                                                            'b')])])])])])])])
 
     with io.StringIO(snippet) as f:
         res, msg = compare_trees(expected, parser.parse(f))
@@ -375,16 +379,32 @@ def test_parenthesized_expression2(parser: RecursiveDescentParser):
 def test_parenthesized_expression3(parser: RecursiveDescentParser):
     snippet = r"""
         test() int { ret (k / (a + b)) }"""
-    expected = Tree('start', [Tree('function_declaration',
-                                   [Token('NAME', 'test'), Tree('function_parameters', []), Token('NAME', 'int'),
-                                    Tree('statements_block', [
-                                        Tree('return_statement', [Tree('multiplicative_expression', [Token('NAME', 'k'),
-                                                                                                     Token(
-                                                                                                         'MULTIPLICATIVE_OPERATOR',
-                                                                                                         '/'), Tree(
-                                                'additive_expression',
-                                                [Token('NAME', 'a'), Token('ADDITIVE_OPERATOR', '+'),
-                                                 Token('NAME', 'b')])])])])])])
+    expected = Tree('start', [Tree(
+        'function_declaration',
+        [Token('NAME', 'test'), Tree(
+            'function_parameters', []), Token('NAME', 'int'),
+         Tree(
+             'statements_block', [Tree(
+                 'return_statement', [Tree(
+                     'parenthesized_expression',
+                     [Tree(
+                         'multiplicative_expression',
+                         [Token('NAME', 'k'),
+                          Token(
+                              'MULTIPLICATIVE_OPERATOR',
+                              '/'), Tree(
+
+                             'parenthesized_expression',
+                             [Tree(
+
+                                 'additive_expression',
+                                 [Token('NAME',
+                                        'a'),
+                                  Token(
+                                      'ADDITIVE_OPERATOR',
+                                      '+'),
+                                  Token('NAME',
+                                        'b')])])])])])])])])
 
     with io.StringIO(snippet) as f:
         res, msg = compare_trees(expected, parser.parse(f))
@@ -437,13 +457,16 @@ def test_if_expression(parser: RecursiveDescentParser):
     snippet = r"""
         test() void { if (a) { b() } }"""
     expected = Tree('start', [Tree('function_declaration',
-                                   [Token('NAME', 'test'), Tree('function_parameters', []), Token('NAME', 'void'),
-                                    Tree('statements_block', [Tree('if_expression', [Token('NAME', 'a'),
-                                                                                     Tree('statements_block', [Tree(
-                                                                                         'postfix_unary_expression',
-                                                                                         [Token('NAME', 'b'),
-                                                                                          Tree('call_suffix',
-                                                                                               [])])])])])])])
+                                   [Token('NAME', 'test'),
+                                    Tree('function_parameters', []),
+                                    Token('NAME', 'void'),
+                                    Tree('statements_block', [Tree('if_expression', [
+                                        Tree('parenthesized_expression', [
+                                            Token('NAME', 'a')]), Tree(
+                                            'statements_block', [
+                                                Tree('postfix_unary_expression',
+                                                     [Token('NAME', 'b'),
+                                                      Tree('call_suffix', [])])])])])])])
 
     with io.StringIO(snippet) as f:
         res, msg = compare_trees(expected, parser.parse(f))

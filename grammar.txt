@@ -72,11 +72,13 @@ indexing_suffix: "[" expression "]"
 navigation_suffix: "." NAME
 
 // Inline
-primary_expression: "(" expression ")"
+primary_expression: parenthesized_expression
   | identifier
   | simple_literal
   | collection_literal
   | if_expression
+
+parenthesized_expression: "(" expression ")"
 
 // Inline
 identifier: NAME

@@ -120,6 +120,9 @@ class TreeTransformer(Transformer):
     def multiplicative_expression(self, node):
         return TreeWithLanguageUnit(node, MultiplicativeExpression(node.children))
 
+    def parenthesized_expression(self, node):
+        return TreeWithLanguageUnit(node, ParenthesizedExpression(node.children[0]))
+
     def additive_expression(self, node):
         return TreeWithLanguageUnit(node, AdditiveExpression(node.children))
 

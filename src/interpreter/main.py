@@ -5,7 +5,7 @@ from lark.lexer import Token
 
 from interpreter.code_snippet_generation import with_italic_comments, with_pre_tag, with_bold_keywords
 from interpreter.parser.parser import RecursiveDescentParser
-from interpreter.scanner.scanner import load_grammar, Scanner
+from interpreter.scanner.scanner import Scanner
 from interpreter.tree_transformer import TreeTransformer
 
 
@@ -35,19 +35,14 @@ def debug_tokens(tokens: Iterable[Token]):
 
 def main():
     with open('../../grammar.txt') as f:
-        grammar = load_grammar(f)
-    scanner = Scanner(grammar)
+        data = f.read()
+    scanner = Scanner(data)
     parser = RecursiveDescentParser(scanner)
     with open("../../test files/test_file_1.txt") as f:
         tree = parser.parse(f)
         # print(tree.pretty())
         tree_ = TreeTransformer().transform(tree)
         print(str(tree_.unit))
-
-
-def debug_term_defs(grammar):
-    for matcher in grammar.terminal_matchers:
-        print(matcher.name + ": " + str(matcher))
 
 
 if __name__ == "__main__":

@@ -318,7 +318,7 @@ class RecursiveDescentParser:
         return Tree("navigation_suffix", [name])
 
     # // Inline
-    # primary_expression: "(" expression ")"
+    # primary_expression: parenthesized_expression
     #   | identifier
     #   | simple_literal
     #   | collection_literal
@@ -383,11 +383,12 @@ class RecursiveDescentParser:
         type_ = self.type()
         return Tree("variable_declaration", [modifier, name, type_])
 
+    # parenthesized_expression: "(" expression ")"
     def parenthesized_expression(self):
         strict_match(self.tokens_controller.next(), Tk.LEFT_PAREN)
         node = self.expression()
         strict_match(self.tokens_controller.next(), Tk.RIGHT_PAREN)
-        return node
+        return Tree("parenthesized_expression", [node])
 
     # collection_literal: "[" expression ("," expression)* "]" | "[" "]"
     def collection_literal(self):

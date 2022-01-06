@@ -113,7 +113,7 @@ class PrefixUnaryExpression:
     postfix_unary_expression: LanguageUnitContainer
 
     def __str__(self):
-        operator = "" if self.prefix_operator is None else self.prefix_operator
+        operator = "" if self.prefix_operator is None else self.prefix_operator.unit
         return operator + str(self.postfix_unary_expression.unit)
 
 
@@ -312,3 +312,11 @@ class CallSuffix(PostfixUnarySuffix):
         if self.function_call_arguments is None:
             return "()"
         return "(" + str(self.function_call_arguments.unit) + ")"
+
+
+@dataclass
+class ParenthesizedExpression(PostfixUnarySuffix):
+    child: LanguageUnitContainer
+
+    def __str__(self):
+        return "(" + str(self.child.unit) + ")"

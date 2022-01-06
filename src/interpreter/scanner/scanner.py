@@ -19,13 +19,7 @@ DEFAULT_TERMINAL_ENTRIES = ((Tk.LEFT_PAREN.name, '"("'),
                             (Tk.DOT.name, '"."'))
 
 
-@dataclass
-class Grammar:
-    rule_defs: List[Any]
-    terminal_matchers: List[Matcher]
-
-
-def iter_terminal_entries(file: TextIO) -> Tuple:
+def iter_terminal_entries(grammar: str) -> Tuple:
     """
     Iterate through the terminal grammar entries. A grammar entry is a left and right part delimited by ':' char
 
@@ -33,7 +27,7 @@ def iter_terminal_entries(file: TextIO) -> Tuple:
     """
 
     yield from DEFAULT_TERMINAL_ENTRIES
-    for line in file.readlines():
+    for line in grammar.splitlines():
         match = re.match(r"(^[A-Z_]*):(.*)", line)
 
         if match is None:
@@ -79,11 +73,10 @@ def between_first_and_last(x):
     return x[1: len(x) - 1]
 
 
-def load_grammar(file: TextIO) -> Grammar:
-    matchers = [(build_matcher(name, definition))
-                for name, definition
-                in iter_terminal_entries(file)]
-    return Grammar([], matchers)
+def build_terminal_matchers(grammar: str) -> List[Matcher]:
+    return [(build_matcher(name, definition))
+            for name, definition
+            in iter_terminal_entries(grammar)]
 
 
 @dataclass
@@ -113,10 +106,12 @@ class AmbiguousMatchException(Exception):
 class Scanner:
     chars: Iterator[Any]
 
-    def __init__(self, grammar: Grammar, ignore_ws: bool = True, ignore_comments: bool = True):
+    def __init__(self, grammar, ignore_ws: bool = True, ignore_comments: bool = True):
         self.ignore_comments = ignore_comments
         self.ignore_ws = ignore_ws
-        self.grammar = grammar
+        self.matchers = build_terminal_matchers(grammar)
+
+        # State
         self.end_cursor = Cursor()
         self.prev_cursor = Cursor()
         self.start_cursor = Cursor()
@@ -156,6 +151,7 @@ class Scanner:
                     "Ambiguous match for: " + self.cur_text +
                     "\ncandidates: " + ', '.join([c.name for c in candidates]))
 
+        self.reset_state()
         self.chars = itertools.chain.from_iterable(file)
         self.move()
         if not self.no_more_chars:
@@ -165,6 +161,14 @@ class Scanner:
                 if self.ignore_ws and x.type == Tk.WS.name:
                     continue
                 yield x
+
+    def reset_state(self):
+        self.end_cursor = Cursor()
+        self.prev_cursor = Cursor()
+        self.start_cursor = Cursor()
+        self.cur_text = ''
+        self.last_matched_text = ''
+        self.no_more_chars = False
 
     def move(self):
         try:
@@ -189,8 +193,7 @@ class Scanner:
         if collected is None:
             collected = []
         candidates = list(
-            filter(lambda x: x.matches(self.cur_text),
-                   self.grammar.terminal_matchers))
+            filter(lambda x: x.matches(self.cur_text), self.matchers))
         if len(candidates) == 0:
             return collected
         old = list(filter(lambda x: x.matches(self.cur_text), collected))
