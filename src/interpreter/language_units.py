@@ -36,7 +36,7 @@ LanguageUnitContainer = Union[TreeWithLanguageUnit, TokenAndLanguageUnit]
 
 @dataclass
 class Type:
-    simple_types: List[TokenAndLanguageUnit[str]]
+    simple_types: List[TokenAndLanguageUnit]
 
     def __str__(self):
         return ".".join(str(t.unit) for t in self.simple_types)
@@ -49,10 +49,7 @@ class PrimaryExpression:
 
 @dataclass
 class SimpleLiteral(PrimaryExpression):
-    value: Union[TokenAndLanguageUnit[str],
-                 TokenAndLanguageUnit[bool],
-                 TokenAndLanguageUnit[int],
-                 TokenAndLanguageUnit[float]]
+    value: TokenAndLanguageUnit
 
     def __str__(self):
         return str(self.value.unit)
@@ -60,8 +57,8 @@ class SimpleLiteral(PrimaryExpression):
 
 @dataclass
 class FunctionParameter:
-    name: TokenAndLanguageUnit[str]
-    type: TokenAndLanguageUnit[Type]
+    name: TokenAndLanguageUnit
+    type: TreeWithLanguageUnit
 
     def __str__(self):
         return f"{self.name.unit} {self.type.unit}"
@@ -81,8 +78,8 @@ class StatementsBlock:
 
 @dataclass
 class VariableDeclaration:
-    var_or_let: TokenAndLanguageUnit[str]
-    variable_name: TokenAndLanguageUnit[str]
+    var_or_let: TokenAndLanguageUnit
+    variable_name: TokenAndLanguageUnit
     type: TreeWithLanguageUnit[Type]
 
     def __str__(self):
@@ -99,7 +96,7 @@ class PostfixUnarySuffix:
 @dataclass
 class PostfixUnaryExpression:
     primary_expression: Union[TreeWithLanguageUnit[PrimaryExpression],
-                              TokenAndLanguageUnit[PrimaryExpression]]
+                              TokenAndLanguageUnit]
     suffixes: List[TreeWithLanguageUnit[PostfixUnarySuffix]]
 
     def __str__(self):
@@ -109,7 +106,7 @@ class PostfixUnaryExpression:
 
 @dataclass
 class PrefixUnaryExpression:
-    prefix_operator: Optional[TokenAndLanguageUnit[str]]
+    prefix_operator: Optional[TokenAndLanguageUnit]
     postfix_unary_expression: LanguageUnitContainer
 
     def __str__(self):
@@ -120,7 +117,7 @@ class PrefixUnaryExpression:
 @dataclass
 class MultiplicativeExpression:
     children: List[
-        Union[TokenAndLanguageUnit[str], TreeWithLanguageUnit[PrefixUnaryExpression]]]
+        Union[TokenAndLanguageUnit, TreeWithLanguageUnit[PrefixUnaryExpression]]]
 
     def __str__(self):
         return " ".join((str(el.unit) for el in self.children))
@@ -128,8 +125,7 @@ class MultiplicativeExpression:
 
 @dataclass
 class AdditiveExpression:
-    children: List[
-        Union[TokenAndLanguageUnit[str], LanguageUnitContainer]]
+    children: List[Union[TokenAndLanguageUnit, LanguageUnitContainer]]
 
     def __str__(self):
         return " ".join((str(it.unit) for it in self.children))
@@ -137,9 +133,7 @@ class AdditiveExpression:
 
 @dataclass
 class Comparison:
-    children: List[Union[
-        TreeWithLanguageUnit[AdditiveExpression],
-        TreeWithLanguageUnit[TokenAndLanguageUnit]]]
+    children: List[Union[TreeWithLanguageUnit[AdditiveExpression], TokenAndLanguageUnit]]
 
     def __str__(self):
         return " ".join(str(it.unit) for it in self.children)
@@ -149,7 +143,7 @@ class Comparison:
 class Equality:
     comparison_and_operators: List[Union[
         LanguageUnitContainer,
-        TokenAndLanguageUnit[str]]]
+        TokenAndLanguageUnit]]
 
     def __str__(self):
         return " ".join(str(exp.unit) for exp in self.comparison_and_operators)
@@ -192,7 +186,7 @@ class CollectionLiteral(PrimaryExpression):
 
 @dataclass
 class ForStatement(Statement):
-    name: TokenAndLanguageUnit[str]
+    name: TokenAndLanguageUnit
     expression: TreeWithLanguageUnit[Expression]
     statements_block: TreeWithLanguageUnit[StatementsBlock]
 
@@ -247,7 +241,7 @@ class IndexingSuffix(PostfixUnarySuffix):
 
 @dataclass
 class NavigationSuffix(PostfixUnarySuffix):
-    name: TokenAndLanguageUnit[str]
+    name: TokenAndLanguageUnit
 
     def __str__(self):
         return "." + self.name.unit
@@ -266,9 +260,9 @@ class ReturnStatement:
 
 @dataclass
 class FunctionDeclaration:
-    name: TokenAndLanguageUnit[str]
-    function_parameters: List[LanguageUnitContainer]
-    return_type: TokenAndLanguageUnit[str]
+    name: TokenAndLanguageUnit
+    function_parameters: List[TreeWithLanguageUnit[FunctionParameter]]
+    return_type: TokenAndLanguageUnit
     statements_block: TreeWithLanguageUnit[StatementsBlock]
 
     def __str__(self):
@@ -280,7 +274,7 @@ class FunctionDeclaration:
 
 @dataclass
 class Start:
-    function_declarations: List[LanguageUnitContainer]
+    function_declarations: List[TreeWithLanguageUnit[FunctionDeclaration]]
 
     def __str__(self):
         return "\n\n".join(str(it.unit) for it in self.function_declarations)
@@ -289,7 +283,7 @@ class Start:
 @dataclass
 class Assignment(Statement):
     left: LanguageUnitContainer
-    operator: TokenAndLanguageUnit[str]
+    operator: TokenAndLanguageUnit
     right: TreeWithLanguageUnit[Expression]
 
     def __str__(self):
@@ -306,7 +300,7 @@ class FunctionCallArguments(PostfixUnarySuffix):
 
 @dataclass
 class CallSuffix(PostfixUnarySuffix):
-    function_call_arguments: Optional[LanguageUnitContainer] = None
+    function_call_arguments: Optional[TreeWithLanguageUnit[FunctionCallArguments]] = None
 
     def __str__(self):
         if self.function_call_arguments is None:

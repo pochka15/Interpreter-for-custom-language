@@ -1,3 +1,8 @@
-print() void {
-    ret 10 and b or 3 + 2
+someValue() int {
+    ret 10 + 5
+}
+
+main() void {
+    let a int = b
+    print(someValue())
 }

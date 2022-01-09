@@ -4,6 +4,7 @@ from lark import Lark, Tree
 from lark.lexer import Token
 
 from interpreter.code_snippet_generation import with_italic_comments, with_pre_tag, with_bold_keywords
+from interpreter.interpretation import Interpreter
 from interpreter.parser.parser import RecursiveDescentParser
 from interpreter.scanner.scanner import Scanner
 from interpreter.tree_transformer import TreeTransformer
@@ -38,11 +39,12 @@ def main():
         data = f.read()
     scanner = Scanner(data)
     parser = RecursiveDescentParser(scanner)
-    with open("../../test files/test_file_1.txt") as f:
+    with open("../../test files/test_file_2.txt") as f:
         tree = parser.parse(f)
-        # print(tree.pretty())
-        tree_ = TreeTransformer().transform(tree)
-        print(str(tree_.unit))
+        transformed = TreeTransformer().transform(tree)
+        Interpreter().interpret(transformed)
+        # print(transformed)
+        print('Done')
 
 
 if __name__ == "__main__":
