@@ -14,27 +14,25 @@ class TreeTransformer(Transformer):
     def __init__(self):
         super().__init__(visit_tokens=True)
 
-    def default_token(self, token: Token):
-        return TokenAndLanguageUnit(token, token)
-
     def DEC_NUMBER(self, token):
-        return TokenAndLanguageUnit(token, int(token))
+        return SimpleLiteral(int(token), token)
 
     def BOOLEAN(self, token):
-        return TokenAndLanguageUnit(token, token == 'true')
+        return SimpleLiteral(token == 'true', token)
 
     def FLOAT_NUMBER(self, token):
-        return TokenAndLanguageUnit(token, float(token))
+        return SimpleLiteral(float(token), token)
 
-    __default_token__ = default_token
+    def NAME(self, token):
+        return token
 
     def start(self, node: Tree):
-        return TreeWithLanguageUnit(node, Start(node.children))
+        return TreeWithUnit(node, Start(node.children))
 
     # function_declaration: NAME "(" function_parameters ")" function_return_type "{" statements_block "}"
     def function_declaration(self, node):
         children = node.children
-        return TreeWithLanguageUnit(
+        return TreeWithUnit(
             node,
             FunctionDeclaration(name=children[0],
                                 function_parameters=children[1].children,
@@ -45,16 +43,16 @@ class TreeTransformer(Transformer):
     def return_statement(self, node):
         children = node.children
         expression = children[0] if len(children) > 0 else None
-        return TreeWithLanguageUnit(node, ReturnStatement(expression))
+        return TreeWithUnit(node, ReturnStatement(expression))
 
     def disjunction(self, node):
-        return TreeWithLanguageUnit(node, Disjunction(node.children))
+        return TreeWithUnit(node, Disjunction(node.children))
 
     def conjunction(self, node):
-        return TreeWithLanguageUnit(node, Conjunction(node.children))
+        return TreeWithUnit(node, Conjunction(node.children))
 
     def equality(self, node):
-        return TreeWithLanguageUnit(node, Equality(node.children))
+        return TreeWithUnit(node, Equality(node.children))
 
     def prefix_unary_expression(self, node):
         children = node.children
@@ -63,7 +61,7 @@ class TreeTransformer(Transformer):
         else:
             operator = None
             expr = children[0]
-        return TreeWithLanguageUnit(node, PrefixUnaryExpression(operator, expr))
+        return TreeWithUnit(node, PrefixUnaryExpression(operator, expr))
 
     def if_expression(self, node):
         children = node.children
@@ -82,88 +80,88 @@ class TreeTransformer(Transformer):
                 last_expression.data == 'else_expression':
             else_expression = last_expression
 
-        return TreeWithLanguageUnit(node, IfExpression(condition,
-                                                       statements_block,
-                                                       else_if_expressions,
-                                                       else_expression))
+        return TreeWithUnit(node, IfExpression(condition,
+                                               statements_block,
+                                               else_if_expressions,
+                                               else_expression))
 
     def elseif_expression(self, node):
         children = node.children
         assert len(children) == 2
-        return TreeWithLanguageUnit(node, ElseIfExpression(*children))
+        return TreeWithUnit(node, ElseIfExpression(*children))
 
     def else_expression(self, node):
         children = node.children
         assert len(children) == 1
-        return TreeWithLanguageUnit(node, ElseExpression(*children))
+        return TreeWithUnit(node, ElseExpression(*children))
 
     def function_parameter(self, node):
         children = node.children
         assert len(children) == 2
-        return TreeWithLanguageUnit(node, FunctionParameter(*children))
+        return TreeWithUnit(node, FunctionParameter(*children))
 
     def statements_block(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, StatementsBlock(children))
+        return TreeWithUnit(node, StatementsBlock(children))
 
     def variable_declaration(self, node):
         children = node.children
         assert len(children) == 3
-        return TreeWithLanguageUnit(node, VariableDeclaration(*children))
+        return TreeWithUnit(node, VariableDeclaration(*children))
 
     def postfix_unary_expression(self, node):
         children = node.children
         assert len(children) > 0
-        return TreeWithLanguageUnit(
+        return TreeWithUnit(
             node, PostfixUnaryExpression(children[0], children[1:]))
 
     def multiplicative_expression(self, node):
-        return TreeWithLanguageUnit(node, MultiplicativeExpression(node.children))
+        return TreeWithUnit(node, MultiplicativeExpression(node.children))
 
     def parenthesized_expression(self, node):
-        return TreeWithLanguageUnit(node, ParenthesizedExpression(node.children[0]))
+        return TreeWithUnit(node, ParenthesizedExpression(node.children[0]))
 
     def additive_expression(self, node):
-        return TreeWithLanguageUnit(node, AdditiveExpression(node.children))
+        return TreeWithUnit(node, AdditiveExpression(node.children))
 
     def comparison(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, Comparison(children))
+        return TreeWithUnit(node, Comparison(children))
 
     def collection_literal(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, CollectionLiteral(children))
+        return TreeWithUnit(node, CollectionLiteral(children))
 
     def for_statement(self, node):
         children = node.children
         assert len(children) == 3
-        return TreeWithLanguageUnit(node, ForStatement(*children))
+        return TreeWithUnit(node, ForStatement(*children))
 
     def while_statement(self, node):
         children = node.children
         assert len(children) == 2
-        return TreeWithLanguageUnit(node, WhileStatement(*children))
+        return TreeWithUnit(node, WhileStatement(*children))
 
     def indexing_suffix(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, IndexingSuffix(children[0]))
+        return TreeWithUnit(node, IndexingSuffix(children[0]))
 
     def call_suffix(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, CallSuffix(*children))
+        return TreeWithUnit(node, CallSuffix(*children))
 
     def navigation_suffix(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, NavigationSuffix(children[0]))
+        return TreeWithUnit(node, NavigationSuffix(children[0]))
 
     def assignment(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, Assignment(*children))
+        return TreeWithUnit(node, Assignment(*children))
 
     def type(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, Type(children))
+        return TreeWithUnit(node, Type(children))
 
     def function_call_arguments(self, node):
         children = node.children
-        return TreeWithLanguageUnit(node, FunctionCallArguments(children))
+        return TreeWithUnit(node, FunctionCallArguments(children))
