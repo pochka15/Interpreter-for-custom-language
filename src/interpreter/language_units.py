@@ -15,9 +15,10 @@ def curly_block(inner: str, indentation_level=1):
 
 
 class TreeWithUnit(Tree, Generic[T]):
-    def __init__(self, tree: Tree, unit: T):
+    def __init__(self, tree: Tree, unit: T, identifier=-1):
         super().__init__(tree.data, tree.children, tree.meta)
         self.unit = unit
+        self.identifier = identifier
 
 
 @dataclass
@@ -63,10 +64,10 @@ class Statement:
 
 @dataclass
 class StatementsBlock:
-    statement: List[TreeWithUnit[Statement]]
+    statements: List[TreeWithUnit[Statement]]
 
     def __str__(self):
-        return "\n".join(custom_str(it) for it in self.statement)
+        return "\n".join(custom_str(it) for it in self.statements)
 
 
 @dataclass
@@ -96,7 +97,7 @@ def custom_str(node: Union[AnyNode, Token]):
 
 @dataclass
 class PostfixUnaryExpression:
-    primary_expression: Union[TreeWithUnit, SimpleLiteral, Name]
+    primary_expression: Union[TreeWithUnit, Name]
     suffixes: List[TreeWithUnit[PostfixUnarySuffix]]
 
     def __str__(self):
@@ -288,21 +289,13 @@ class Assignment(Statement):
 
 
 @dataclass
-class FunctionCallArguments(PostfixUnarySuffix):
-    expressions: List[AnyNode]
-
-    def __str__(self):
-        return ", ".join(custom_str(e) for e in self.expressions)
-
-
-@dataclass
 class CallSuffix(PostfixUnarySuffix):
-    function_call_arguments: Optional[TreeWithUnit[FunctionCallArguments]] = None
+    function_call_arguments: List[AnyNode]
 
     def __str__(self):
-        if self.function_call_arguments is None:
+        if len(self.function_call_arguments) == 0:
             return "()"
-        return "(" + custom_str(self.function_call_arguments) + ")"
+        return "(" + ", ".join(custom_str(e) for e in self.function_call_arguments) + ")"
 
 
 @dataclass

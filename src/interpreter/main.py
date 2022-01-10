@@ -43,21 +43,7 @@ def main():
         tree = parser.parse(f)
         transformed = TreeTransformer().transform(tree)
         Interpreter().interpret(transformed)
-        # print(transformed)
-        print('Done')
 
 
 if __name__ == "__main__":
     main()
-    # copy(make_pretty("""
-    # # Create a list
-    # c numbers List = [1, 2, 3]
-    # 
-    # # Get element by index
-    # c first_element int = numbers[0] # Indexation starts from 0
-    # 
-    # # Add element to the end
-    # numbers.add(4)
-    # 
-    # c fourth_element = numbers[3]
-    # """))

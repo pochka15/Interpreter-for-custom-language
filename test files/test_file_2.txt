@@ -3,6 +3,5 @@ someValue() int {
 }
 
 main() void {
-    let a int = b
     print(someValue())
 }

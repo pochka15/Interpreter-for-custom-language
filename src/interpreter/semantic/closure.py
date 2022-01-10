@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, List, Dict, Union
+from typing import List, Dict, Union
 
 
 class DefaultValue:
@@ -11,8 +11,7 @@ class DefaultValue:
 class Variable:
     name: str
     type: str
-    identifier: int
-    value: Any = DefaultValue
+    is_bound: bool = False
     is_const: bool = False
 
 
@@ -20,7 +19,6 @@ class Variable:
 class Function:
     name: str
     return_type: str
-    identifier: int
     params: List[Variable]
 
 

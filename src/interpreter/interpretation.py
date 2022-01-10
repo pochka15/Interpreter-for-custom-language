@@ -1,12 +1,8 @@
-from typing import Any, Dict
+from typing import Dict
 
 from lark import Visitor
 
-from dataclasses import dataclass
-
 from interpreter.language_units import *
-from interpreter.language_units import TreeWithLanguageUnit
-from interpreter.semantic.closure import Closure, Variable, Function
 
 
 def is_val(tree: Tree):
@@ -19,153 +15,158 @@ class Executable:
     return_type: Optional[str] = None
 
 
-@dataclass
-class SymbolContainer:
-    symbol: Variable
+class Closure:
+    def __init__(self, parent=None):
+        super().__init__()
+        self.parent: Closure = parent
+        self.name_to_value: Dict[str, Any] = {}
+        self.name_to_function: Dict[str, Any] = {}
+        self.values = []
+
+    def lookup(self, name):
+        x = self.name_to_function.get(name, None)
+        if x is not None:
+            return x
+
+        x = self.name_to_value.get(name, None)
+        if x is not None:
+            return x
+
+        if self.parent is not None:
+            return self.parent.lookup(name)
+
+        return None
 
 
 class Interpreter(Visitor):
-    def __init__(self):
+    def __init__(self, is_test=False):
         super().__init__()
-        self.counter = 0
+        self.is_test = is_test
+        self.test_outputs: List[str] = []
         self.closure = Closure()
-        self.main_function: TreeWithLanguageUnit[FunctionDeclaration]
+        # stack of the returned values from functions
+        self.returned_values = []
 
-        # Dictionaries for the interpretation
-        self.node_to_variable: Dict[LanguageUnitContainer, Variable] = {}
-        self.node_to_function: Dict[LanguageUnitContainer, Function] = {}
-        self.node_to_executable: Dict[Any, Executable] = {}
-        self.node_to_value: Dict[Any, Any] = {}
+    # noinspection PyUnresolvedReferences
+    def visit_once(self, node: TreeWithUnit):
+        self._call_userfunc(node)
 
-    def next_id(self):
-        x = self.counter
-        self.counter += 1
-        return x
-
-    def execute_node(self, node: LanguageUnitContainer):
-        if node is TokenAndLanguageUnit:
-            if node.token == 'print':
-                return print
-
-        executable = self.node_to_executable.get(node, None)
-        if executable is not None:
-            return executable.func()
-
-        value = self.node_to_value.get(node, None)
-        if value is not None:
-            return value
-
-    def resolve_type(self, node) -> str:
-        value = self.node_to_value.get(node, None)
-        if value is not None:
-            return type(value).__name__
-
-        executable = self.node_to_executable.get(node, None)
-        if executable is not None:
-            return executable.return_type
+    def eval(self, node: AnyNode):
+        if isinstance(node, TreeWithUnit):
+            self.visit_once(node)
+            return self.closure.values.pop()
+        if isinstance(node, SimpleLiteral):
+            return node.value
+        elif isinstance(node, Name):
+            return self.closure.name_to_value[node]
 
     def interpret(self, tree):
-        self.visit(tree)
-        self.execute_node(self.main_function)
+        self.visit_once(tree)
+        if self.is_test:
+            return self.test_outputs
 
-    def start(self, node: TreeWithLanguageUnit[Start]):
-        child: LanguageUnitContainer
-        functions = [x for x in node.unit.function_declarations
-                     if str(x.unit.name) == 'main']
-        if len(functions) > 0:
-            self.main_function = functions[0]
+    def new_closure(self, func):
+        parent = self.closure
+        self.closure = Closure(parent)
+        ret = func()
+        self.closure = parent
+        return ret
 
-    def assignment(self, tree: TreeWithLanguageUnit[Assignment]):
-        def executable_func():
-            symbol = self.node_to_variable[tree.unit.left]
-            symbol.value = self.execute_node(tree.unit.right)
+    def start(self, node: TreeWithUnit[Start]):
+        # Add builtins
+        self.closure.name_to_function['print'] = print
+        self.closure.name_to_function['str'] = str
+        self.closure.name_to_function['test_print'] = lambda it: self.test_outputs.append(it)
 
-        self.node_to_executable[tree] = Executable(executable_func, None)
+        # Visit function declarations
+        for x in node.unit.function_declarations:
+            self.visit_once(x)
 
-    def variable_declaration(self, node: TreeWithLanguageUnit[VariableDeclaration]):
-        is_const = node.unit.var_or_let.unit == 'let'
-        symbol = Variable(node.unit.variable_name.unit,
-                          str(node.unit.type.unit),
-                          self.next_id(),
-                          False,
-                          is_const)
-        self.node_to_variable[node] = symbol
-        self.closure[node.unit.variable_name] = symbol
-        self.node_to_variable[node] = symbol
+        # Visit main's statements block
+        main: TreeWithUnit[FunctionDeclaration] = [
+            x for x in node.unit.function_declarations
+            if str(x.unit.name) == 'main'][0]
+        self.visit_once(main.unit.statements_block)
 
-    def additive_expression(self, tree: TreeWithLanguageUnit[AdditiveExpression]):
-        def executable_func():
-            children = tree.unit.children
-            iterator = iter(children)
-            value = self.execute_node(next(iterator))
-            operator = next(iterator, None)
+    def function_declaration(self, node: TreeWithUnit[FunctionDeclaration]):
+        def fn(*args):
+            def inner():
+                params = node.unit.function_parameters
+                params_iter = iter(params)
+                for arg in args:
+                    param = next(params_iter)
+                    self.closure.name_to_value[param.unit.name] = arg
+                self.visit_once(node.unit.statements_block)
+                return self.returned_values.pop()
 
-            while operator is not None:
-                right_value = self.execute_node(next(iterator))
-                if operator.unit == '-':
-                    value -= right_value
-                elif operator.unit == '+':
-                    value += right_value
-                else:
-                    raise Exception(
-                        f"Unknown operator: {operator.unit} at {operator.token.line}:{operator.token.column}")
-                operator = next(iterator, None)
+            return self.new_closure(inner)
 
-        self.node_to_executable[tree] = Executable(
-            executable_func, self.resolve_type(tree.unit.children[0]))
+        name = node.unit.name
+        self.closure.name_to_function[name] = fn
 
-    def return_statement(self, node: TreeWithLanguageUnit[ReturnStatement]):
-        expression = node.unit.expression
-        if expression is not None:
-            self.node_to_executable[node] = Executable(
-                lambda: self.execute_node(expression),
-                self.resolve_type(expression))
+    def statements_block(self, node: TreeWithUnit[StatementsBlock]):
+        def inner():
+            statements = node.unit.statements
+            for x in statements:
+                self.visit_once(x)
 
-    def statements_block(self, node: TreeWithLanguageUnit[StatementsBlock]):
-        def executable_func():
-            for statement in node.unit.statements:
-                self.execute_node(statement)
+        self.new_closure(inner)
 
-        self.closure = Closure(self.closure)
-        self.node_to_executable[node] = Executable(executable_func)
+    def return_statement(self, node: TreeWithUnit[ReturnStatement]):
+        self.returned_values.append(self.eval(node.unit.expression))
 
-    def function_declaration(self, node: TreeWithLanguageUnit[FunctionDeclaration]):
-        def executable_func():
-            return self.execute_node(node.unit.statements_block)
+    def additive_expression(self, node: TreeWithUnit[AdditiveExpression]):
+        children_iter = iter(node.unit.children)
+        value = self.eval(next(children_iter))
+        operator = next(children_iter, None)
 
-        # Add parameters to the new closure
-        self.closure = Closure(self.closure)
-        params = []
-        for param in node.unit.function_parameters:
-            symbol = Variable(str(param.unit), str(param.unit.type.unit), hash(node), is_const=True)
-            self.closure[str(param.unit)] = symbol
-            self.node_to_variable[param] = symbol
-            params.append(symbol)
+        while operator is not None:
+            next_val = self.eval(next(children_iter))
+            if operator == '+':
+                value = value + next_val
+            elif operator == '-':
+                value = value - next_val
+            operator = next(children_iter, None)
 
-        # Add function to the new closure
-        self.closure = Closure(self.closure)
-        return_type_unit = node.unit.return_type.unit
-        name_unit = node.unit.name.unit
-        func = Function(str(name_unit), str(return_type_unit), self.next_id(), params)
-        self.node_to_function[node] = func
-        self.closure[node] = func
+        self.closure.values.append(value)
 
-        self.node_to_executable[node] = Executable(executable_func, str(return_type_unit))
+    def assignment(self, node: TreeWithUnit[Assignment]):
+        value = self.eval(node.unit.right)
+        variable_declaration = node.unit.left.unit
+        assert isinstance(variable_declaration, VariableDeclaration)
+        name = variable_declaration.variable_name
+        self.closure.name_to_value[name] = value
 
-    def postfix_unary_expression(self, node: TreeWithLanguageUnit[PostfixUnaryExpression]):
-        def executable_func():
-            assert len(node.unit.suffixes) == 1
-            suffix = node.unit.suffixes[0]
-            assert suffix is CallSuffix
-            func = self.node_to_function[node.unit.primary_expression]
-            func.params[0].value = self.execute_node(suffix)
-            return self.execute_node(node.unit.primary_expression)
+    def apply_suffix(self, name, suffix, args):
+        if isinstance(suffix.unit, IndexingSuffix):
+            return None
+        elif isinstance(suffix.unit, CallSuffix):
+            # for debug
+            fn = self.closure.lookup(name)
+            if fn is None:
+                raise Exception("Couldn't find")
+            return fn(*args)
+        elif isinstance(suffix.unit, NavigationSuffix):
+            return None
 
-        return Executable(executable_func)
+    def postfix_unary_expression(self, node: TreeWithUnit[PostfixUnaryExpression]):
+        arguments = []
 
-    def call_suffix(self, node: TreeWithLanguageUnit[CallSuffix]):
-        def executable_func():
-            return [self.node_to_executable[expr].func()
-                    for expr in node.unit.function_call_arguments.unit.expressions]
+        assert len(node.unit.suffixes) == 1
+        suffix = node.unit.suffixes[0]
 
-        return Executable(executable_func)
+        if isinstance(suffix.unit, IndexingSuffix):
+            arguments = [self.eval(suffix.unit.expression)]
+        elif isinstance(suffix.unit, CallSuffix):
+            if suffix.unit.function_call_arguments is None:
+                arguments = []
+            else:
+                expressions = suffix.unit.function_call_arguments
+                arguments = [self.eval(expr) for expr in expressions]
+        elif isinstance(suffix.unit, NavigationSuffix):
+            arguments = [suffix.unit.name]
+
+        name = node.unit.primary_expression
+        assert isinstance(name, Name)
+        value = self.apply_suffix(name, suffix, arguments)
+        self.closure.values.append(value)
