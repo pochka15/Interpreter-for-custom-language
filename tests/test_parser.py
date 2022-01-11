@@ -656,10 +656,39 @@ def test_type_with_comma_instead_of_dot_exceptional(parser: RecursiveDescentPars
 
 
 # noinspection PyTypeChecker
-def test_not_matched_parentheses_exceptionalp(parser: RecursiveDescentParser):
+def test_not_matched_parentheses_exceptional(parser: RecursiveDescentParser):
     snippet = r"""
         test() void { ret (a(b)(k }"""
 
     with io.StringIO(snippet) as f:
         with pytest.raises(UnexpectedToken):
             parser.parse(f)
+
+
+# noinspection PyTypeChecker
+def test_reassignment(parser: RecursiveDescentParser):
+    snippet = r"""
+            test() void {
+                var x int = 1
+                x = 2
+            }"""
+    expected = Tree('start', [Tree('function_declaration',
+                                   [Token('NAME', 'test'),
+                                    Tree('function_parameters', []),
+                                    Token('NAME', 'void'),
+                                    Tree('statements_block', [
+                                        Tree('assignment', [
+                                            Tree('variable_declaration', [
+                                                Token('VAR', 'var'),
+                                                Token('NAME', 'x'),
+                                                Tree('type', [Token('NAME', 'int')])]),
+                                            Token('ASSIGNMENT_OPERATOR', '='),
+                                            Token('DEC_NUMBER', '1')]),
+                                        Tree('assignment', [
+                                            Token('NAME', 'x'),
+                                            Token('ASSIGNMENT_OPERATOR', '='),
+                                            Token('DEC_NUMBER', '2')])])])])
+
+    with io.StringIO(snippet) as f:
+        res, msg = compare_trees(expected, parser.parse(f))
+        assert res, msg

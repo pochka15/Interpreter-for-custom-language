@@ -18,8 +18,10 @@ variable_declaration: (VAR | LET) NAME type
 
 statements_block: statement*
 
-assignment: variable_declaration ASSIGNMENT_OPERATOR expression
-  | prefix_unary_expression ASSIGNMENT_AND_OPERATOR expression
+assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
+
+// Inline
+directly_assignable_expression: variable_declaration | NAME
 
 // Inline
 assignable_suffix: indexing_suffix
@@ -73,15 +75,12 @@ navigation_suffix: "." NAME
 
 // Inline
 primary_expression: parenthesized_expression
-  | identifier
+  | NAME
   | simple_literal
   | collection_literal
   | if_expression
 
 parenthesized_expression: "(" expression ")"
-
-// Inline
-identifier: NAME
 
 collection_literal: "[" expression ("," expression)* "]" | "[" "]"
 
@@ -111,7 +110,6 @@ COMPARISON_OPERATOR: "<" | ">" | "<=" | ">="
 ADDITIVE_OPERATOR: "+" | "-"
 NEGATION: "!"
 MULTIPLICATIVE_OPERATOR: "*" | "/" | "%"
-ASSIGNMENT_AND_OPERATOR: "+=" | "-=" | "*=" | "/=" | "%="
 LET: "let"
 VAR: "var"
 NAME: /(?!(if|elif|or|and|for|while|true|false|ret|break|else|in|var|let)\b)[a-zA-Z_][a-zA-Z_0-9]*/

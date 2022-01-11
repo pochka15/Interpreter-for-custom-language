@@ -131,12 +131,14 @@ class RecursiveDescentParser:
         if match(token, Tk.WHILE):
             return self.while_statement()
         else:
+            # Decide whether assignment or expression
             if match(token, Tk.VAR) or match(token, Tk.LET):
-                return self.assignment()
+                return self.assignment_starting_from_variable_declaration()
             else:
                 expression = self.prefix_unary_expression()
-                if match(self.tokens_controller.peek(), Tk.ASSIGNMENT_AND_OPERATOR):
-                    return self.assignment(expression)
+                if match(self.tokens_controller.peek(), Tk.ASSIGNMENT_OPERATOR):
+                    assert isinstance(expression, Token) and match(expression, Tk.NAME), str(expression)
+                    return self.assignment_starting_from_name(expression)
                 return self.expression(expression)
 
     # Inline jump_statement: return_expression | BREAK
@@ -319,16 +321,16 @@ class RecursiveDescentParser:
 
     # // Inline
     # primary_expression: parenthesized_expression
-    #   | identifier
+    #   | NAME
     #   | simple_literal
     #   | collection_literal
     #   | if_expression
     def primary_expression(self):
-        if match(self.tokens_controller.peek(), Tk.NAME):
-            return self.identifier()
-
         if match(self.tokens_controller.peek(), Tk.LEFT_PAREN):
             return self.parenthesized_expression()
+
+        if match(self.tokens_controller.peek(), Tk.NAME):
+            return self.tokens_controller.next()
 
         simple_literal = self.try_to_build_simple_literal()
         if simple_literal is not None:
@@ -350,30 +352,23 @@ class RecursiveDescentParser:
             if match(token, type_):
                 return self.tokens_controller.next()
 
-    # // Inline
-    # identifier: NAME
-    def identifier(self):
-        token = self.tokens_controller.next()
-        strict_match(token, Tk.NAME)
-        return token
+    # assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
+    # where directly_assignable_expression is a prebuilt NAME node
+    def assignment_starting_from_name(self, prebuilt_name):
+        left = prebuilt_name
+        operator = self.tokens_controller.next()
+        strict_match(operator, Tk.ASSIGNMENT_OPERATOR)
+        right = self.expression()
+        return Tree("assignment", [left, operator, right])
 
-    # assignment: variable_declaration ASSIGNMENT_OPERATOR expression
-    #   | prefix_unary_expression ASSIGNMENT_AND_OPERATOR expression
-    def assignment(self, prebuilt_prefix_unary_expression: Optional = None):
-        token = self.tokens_controller.peek()
-        if match(token, Tk.VAR) or match(token, Tk.LET):
-            variable_declaration = self.variable_declaration()
-            operator = self.tokens_controller.next()
-            strict_match(operator, Tk.ASSIGNMENT_OPERATOR)
-            expression = self.expression()
-            return Tree("assignment", [variable_declaration, operator, expression])
-        else:
-            x = prebuilt_prefix_unary_expression
-            prefix_expression = x if x is not None else self.prefix_unary_expression()
-            operator = self.tokens_controller.next()
-            strict_match(operator, Tk.ASSIGNMENT_AND_OPERATOR)
-            expression = self.expression()
-            return Tree("assignment", [prefix_expression, operator, expression])
+    # assignment: directly_assignable_expression ASSIGNMENT_OPERATOR expression
+    # where directly_assignable_expression is a variable_declaration
+    def assignment_starting_from_variable_declaration(self):
+        left = self.variable_declaration()
+        operator = self.tokens_controller.next()
+        strict_match(operator, Tk.ASSIGNMENT_OPERATOR)
+        right = self.expression()
+        return Tree("assignment", [left, operator, right])
 
     # variable_declaration: (VAR | CONST) NAME type
     def variable_declaration(self):

@@ -48,17 +48,26 @@ class Interpreter(Visitor):
         self.returned_values = []
 
     # noinspection PyUnresolvedReferences
-    def visit_once(self, node: TreeWithUnit):
+    def visit_once(self, node: TreeWithUnit) -> None:
+        """
+        Visit the node only once. Comparing to the default 'visit' function it doesn't visit nodes recursively
+        :param node: node that is visited
+        """
         self._call_userfunc(node)
 
     def eval(self, node: AnyNode):
+        """
+        Evaluate the expression which is bound to the given node
+        :param node: node that gets evaluated.
+        :return: the result of the evaluated expression
+        """
         if isinstance(node, TreeWithUnit):
             self.visit_once(node)
             return self.closure.values.pop()
         if isinstance(node, SimpleLiteral):
             return node.value
         elif isinstance(node, Name):
-            return self.closure.name_to_value[node]
+            return self.closure.lookup(node)
 
     def interpret(self, tree):
         self.visit_once(tree)
@@ -132,9 +141,15 @@ class Interpreter(Visitor):
 
     def assignment(self, node: TreeWithUnit[Assignment]):
         value = self.eval(node.unit.right)
-        variable_declaration = node.unit.left.unit
-        assert isinstance(variable_declaration, VariableDeclaration)
-        name = variable_declaration.variable_name
+        left = node.unit.left
+        # Variable declaration
+        if isinstance(node.unit.left, TreeWithUnit):
+            variable_declaration = left.unit
+            assert isinstance(variable_declaration, VariableDeclaration)
+            name = variable_declaration.variable_name
+        # Reassignment
+        else:
+            name = left
         self.closure.name_to_value[name] = value
 
     def apply_suffix(self, name, suffix, args):

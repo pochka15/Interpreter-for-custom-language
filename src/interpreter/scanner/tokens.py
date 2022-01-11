@@ -11,7 +11,6 @@ class Token(Enum):
     ADDITIVE_OPERATOR = auto()
     NEGATION = auto()
     MULTIPLICATIVE_OPERATOR = auto()
-    ASSIGNMENT_AND_OPERATOR = auto()
     LET = auto()
     VAR = auto()
     NAME = auto()

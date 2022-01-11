@@ -29,6 +29,9 @@ class TreeTransformer(Transformer):
     def FLOAT_NUMBER(self, token):
         return SimpleLiteral(float(token), token)
 
+    def STRING(self, token):
+        return SimpleLiteral(token.strip('"'), token)
+
     def NAME(self, token):
         return token
 

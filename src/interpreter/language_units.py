@@ -280,7 +280,7 @@ class Start:
 
 @dataclass
 class Assignment(Statement):
-    left: AnyNode
+    left: Union[TreeWithUnit[VariableDeclaration], Name]
     operator: Token
     right: AnyNode
 

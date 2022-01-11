@@ -123,16 +123,6 @@ def test_relative_location(grammar: str):
         assert c == 2
 
 
-def test_assignment_and_operators(grammar: str):
-    s = 'value += 15\n' \
-        'value / 5\n' \
-        'value /= 5'
-    with io.StringIO(s) as f:
-        tokens = list(Scanner(grammar).iter_tokens(f))
-        assert find_token(tokens, value='+=').type == 'ASSIGNMENT_AND_OPERATOR'
-        assert find_token(tokens, value='/=').type == 'ASSIGNMENT_AND_OPERATOR'
-
-
 def test_unsupported_chars(grammar: str):
     s = '$$$$$$'
     with io.StringIO(s) as f:
