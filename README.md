@@ -7,17 +7,17 @@ techniques course.
 
 ## About the language
 
-The syntax of the language is like a simplified python's syntax. It's a statically typed general-purpose, programming
-language. It's made to perform simple operations on variables, call functions and write small scripts.
+The syntax of the language is a mixture of a python and some mainstream languages like kotlin or swift. It's a
+statically typed general-purpose, programming language. It's made to perform simple operations on variables, call
+functions and write small scripts.
 
-See the language example [here](./test%20files/test_file_1.txt)
+See the example snippet [here](./test%20files/test_file_1.txt)
 
-## Language wiki and grammar
+## Wiki and grammar
 
-- On the [wiki pages](https://github.com/pochka15/Interpreter-for-custom-language/wiki/Basics) you can find the language
-  structure.
-- Following this [link](./grammar.txt) you can see the whole grammar of the language written in EBNF format.
-- The whitespaces are ignored in the language except the newline. All the new expressions must start with a new line.
+- On the [wiki pages](https://github.com/pochka15/Interpreter-for-custom-language/wiki/Basics) you can read about the
+  language more deeply.
+- Following this [link](./grammar.txt) you can see the whole grammar of the language written in a custom EBNF format.
 
 ## Prerequisites
 
@@ -52,8 +52,7 @@ python3 main.py input.txt
     - make it possible to write visitors for the AST
 - Backend: Make it possible to read a text file then write the interpretation result to the standard output
 - Errors
-    - show the error message, containing the line of an error
-    - stop interpreter when the there occurs an error during the parsing or semantic analysis
+    - show the error message, containing the line of an error during the scanning (tokenizing) process
 
 ### What should be interpreted
 
@@ -79,21 +78,22 @@ python3 main.py input.txt
 - Language
     - The interpreter must be written in python 3 without the usage of existing libraries that do the whole parsing
       process
-    
+
 ## Interpretation
 
 It's build an AST tree for the whole given input txt file. Then all the expressions are executed using python under the
 hood. Functions can be declared anywhere in the file and there should be one **main()** entrypoint function which
 returns void type.
 
-Here's showed what happens to a token during the interpretation process:
+Here's showed what happens during the interpretation process:
 
-```txt
-Token 
-|> [transformer] => TransformationNode (e.x. Comparison or Expression)
-|> [semanticAnalyzer] => SemanticNode (e.x. Callable)
-|> Interpreter
-```
+1. **Scanning**: take grammar and the input file, create a stream of tokens out of it
+2. **Parsing**: build the AST for the stream of tokens
+3. **Transformation**: pass the AST to the transformer which maps nodes to custom nodes like NodeWithLanguageUnit where
+   language unit is a data structure representing some language rule like an assignment for example
+4. **Semantic analysis**: for each node (going bottom-up) ensure that they can be interpreted correctly. Check if types
+   are correct and so on
+5. **Interpretation**: for each node (going top-down) execute statements and evaluate expressions
 
 ## Tests
 
@@ -108,33 +108,15 @@ snippets of different language structures.
 Scanner is tested by matching the generated token sequence with an expected sequence
 
 ```python
-def test_comment_token():
-  snippet = "c a int # this is some comment"
-  assert list(Scanner().iter_tokens()) == TODO( @ pochka15): finish
-```
-
-### Transformation tests
-
-All the token transformations into the language units are tested by comparing the input snippet with the expected AST
-nodes.
-
-```python
-def test_variable_declaration():
-    snippet = "c a int = 1"
-    tree = parse(snippet)
-    node = find_node_by_name(tree, "variable_declaration")
-    assert isinstance(node, VariableDeclaration)
-    assert str(node) == "c a int"
-
-
-def test_assignment():
-    snippet = "c a int = 5"
-    tree = parse(snippet)
-    node = find_node_by_name(tree, "assignment")
-    var_decl = extract(node, 'left_expression')
-    assert (isinstance(var_decl, VariableDeclaration))
-    assert str(extract(node, 'operator')) == '='
-    assert str(extract(node, 'right_expression')) == '5'
+def test_name(grammar: str):
+    token = 'Hello'
+    tokens = [Token('NAME', 'Hello')]
+    iterator = iter(tokens)
+    with io.StringIO(token) as f:
+        for token in Scanner(grammar).iter_tokens(f):
+            expected = next(iterator)
+            assert token.type == expected.type
+            assert token.value == expected.value
 ```
 
 ### Parser tests
@@ -142,82 +124,17 @@ def test_assignment():
 Parser is tested by generating the AST trees and matching it with expected trees
 
 ```python
-def test_for_in_list(lark):
+def test_disjunction(parser: RecursiveDescentParser):
     snippet = r"""
-    for v in [v1, v2, v3] {
-        print(v)
-    }
-    """
-    expected = Tree('start', [Tree('for_statement', [Token('NAME', 'v'), Tree('collection_literal', ...), ...])])
-    actual = Parser().parse(snippet)
-    result, message = compare_trees(expected, actual)
-    assert result, message
+        test() bool { ret a or b }"""
 
-
-def test_loop_fails_when_in_omitted():
-    try:
-        tree = Parser().parse(r"""
-    for x [1, 2, 3] {
-        print(x)
-    }""")
-    except Exception:
-        pass
-    else:
-        pytest.fail("Exception must be raised here, there shouldn't be generated a tree:\n" + tree)
+    expected = Tree('start', ...)
+    with io.StringIO(snippet) as f:
+        result, message = compare_trees(expected, parser.parse(f))
+        assert result, message
 ```
 
 ### Interpreter tests
 
 To test the interpreter we use test files. There will be compared the output of the interpretation with the expected
 values.
-
-## Interfaces
-
-**Scanner**
-
-- iter_tokens(): Iterator[Token]\
-  It matches input characters to the pair [value, terminal_name]
-
-**Parser** (depends on Scanner)
-
-- parse(scanner, start): Tree\
-  It iterates through the tokens of a scanner and produces an abstract syntax tree.
-
-**Visitor**
-
-This is an interface for the 'Visitor' pattern to visit AST nodes
-
-- visit(tree): Tree
-
-**Transformer** (extends Visitor)
-
-- transform(tree): Tree\
-  Transformers visit each node of the tree (bottom-up), and run the appropriate method on it according to the node's
-  data.
-
-**Semantic analyzer** (extends Visitor)
-
-This visitor is primarily made to run the semantic analysis and prepare the tree for the interpretation.
-
-**Tree**
-
-- data: str - the name of the rule or alias
-- children: List[Tree] - list of matched sub-rules and terminals
-- meta: Meta - a data class that contains: line, column, start_pos, end_line, end_column, end_pos
-    - iter_subtrees(): Iterator[Tree] - botton-up iterator
-    - iter_subtrees_topdown(): Iterator[Tree]
-
-**Token**
-
-- type
-- value
-- line
-- column
-
-**TransformationNode**
-
-This is a base type for all the nodes after applying the transformer on tokens
-
-**SemanticNode**
-
-This is a base type for all the nodes after rugging the semantic analyzer
