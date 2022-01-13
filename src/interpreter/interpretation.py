@@ -21,9 +21,8 @@ class Closure:
         self.parent: Closure = parent
         self.name_to_value: Dict[str, Any] = {}
         self.name_to_function: Dict[str, Any] = {}
-        self.values = []
 
-    def lookup(self, name):
+    def lookup(self, name: str):
         x = self.name_to_function.get(name, None)
         if x is not None:
             return x
@@ -44,16 +43,15 @@ class Interpreter(Visitor):
         self.is_test = is_test
         self.test_outputs: List[str] = []
         self.closure = Closure()
-        # stack of the returned values from functions
-        self.returned_values = []
 
     # noinspection PyUnresolvedReferences
-    def visit_once(self, node: TreeWithUnit) -> None:
+    def visit_once(self, node: TreeWithUnit) -> Any:
         """
         Visit the node only once. Comparing to the default 'visit' function it doesn't visit nodes recursively
         :param node: node that is visited
+        :return: any value that is returned from the called function
         """
-        self._call_userfunc(node)
+        return self._call_userfunc(node)
 
     def eval(self, node: AnyNode):
         """
@@ -62,8 +60,7 @@ class Interpreter(Visitor):
         :return: the result of the evaluated expression
         """
         if isinstance(node, TreeWithUnit):
-            self.visit_once(node)
-            return self.closure.values.pop()
+            return self.visit_once(node)
         if isinstance(node, SimpleLiteral):
             return node.value
         elif isinstance(node, Name):
@@ -75,6 +72,11 @@ class Interpreter(Visitor):
             return self.test_outputs
 
     def new_closure(self, func):
+        """
+        Utility function that evaluates given function in a new nested closure
+        :param func: function that is called
+        :return: the return value of the called function
+        """
         parent = self.closure
         self.closure = Closure(parent)
         ret = func()
@@ -105,8 +107,7 @@ class Interpreter(Visitor):
                 for arg in args:
                     param = next(params_iter)
                     self.closure.name_to_value[param.unit.name] = arg
-                self.visit_once(node.unit.statements_block)
-                return self.returned_values.pop()
+                return self.visit_once(node.unit.statements_block)
 
             return self.new_closure(inner)
 
@@ -116,13 +117,17 @@ class Interpreter(Visitor):
     def statements_block(self, node: TreeWithUnit[StatementsBlock]):
         def inner():
             statements = node.unit.statements
+            return_value = None
             for x in statements:
-                self.visit_once(x)
+                value = self.visit_once(x)
+                if isinstance(x, TreeWithUnit) and isinstance(x.unit, ReturnStatement):
+                    return_value = value
+            return return_value
 
-        self.new_closure(inner)
+        return self.new_closure(inner)
 
-    def return_statement(self, node: TreeWithUnit[ReturnStatement]):
-        self.returned_values.append(self.eval(node.unit.expression))
+    def return_statement(self, node: TreeWithUnit[ReturnStatement]) -> Any:
+        return self.eval(node.unit.expression)
 
     def additive_expression(self, node: TreeWithUnit[AdditiveExpression]):
         children_iter = iter(node.unit.children)
@@ -137,7 +142,7 @@ class Interpreter(Visitor):
                 value = value - next_val
             operator = next(children_iter, None)
 
-        self.closure.values.append(value)
+        return value
 
     def assignment(self, node: TreeWithUnit[Assignment]):
         value = self.eval(node.unit.right)
@@ -152,36 +157,30 @@ class Interpreter(Visitor):
             name = left
         self.closure.name_to_value[name] = value
 
-    def apply_suffix(self, name, suffix, args):
-        if isinstance(suffix.unit, IndexingSuffix):
-            return None
-        elif isinstance(suffix.unit, CallSuffix):
-            # for debug
-            fn = self.closure.lookup(name)
-            if fn is None:
-                raise Exception("Couldn't find")
-            return fn(*args)
-        elif isinstance(suffix.unit, NavigationSuffix):
-            return None
+    def call_func(self, name: str, args):
+        fn = self.closure.lookup(name)
+        if fn is None:
+            raise Exception("Couldn't find")
+        return fn(*args)
 
     def postfix_unary_expression(self, node: TreeWithUnit[PostfixUnaryExpression]):
-        arguments = []
-
-        assert len(node.unit.suffixes) == 1
+        assert len(node.unit.suffixes) == 1, "More than one suffix can not be interpreted yet"
         suffix = node.unit.suffixes[0]
 
-        if isinstance(suffix.unit, IndexingSuffix):
-            arguments = [self.eval(suffix.unit.expression)]
-        elif isinstance(suffix.unit, CallSuffix):
-            if suffix.unit.function_call_arguments is None:
-                arguments = []
-            else:
-                expressions = suffix.unit.function_call_arguments
-                arguments = [self.eval(expr) for expr in expressions]
-        elif isinstance(suffix.unit, NavigationSuffix):
-            arguments = [suffix.unit.name]
+        expression = self.eval(node.unit.primary_expression)
+        result = None
 
-        name = node.unit.primary_expression
-        assert isinstance(name, Name)
-        value = self.apply_suffix(name, suffix, arguments)
-        self.closure.values.append(value)
+        if isinstance(suffix.unit, CallSuffix):
+            func = expression
+            expressions = suffix.unit.function_call_arguments
+            arguments = [self.eval(expr) for expr in expressions]
+            result = func(*arguments)
+
+        if isinstance(suffix.unit, IndexingSuffix):
+            argument = self.eval(suffix.unit.expression)
+            result = expression[argument]
+
+        return result
+
+    def collection_literal(self, node: TreeWithUnit[CollectionLiteral]) -> List:
+        return [self.eval(expr) for expr in node.unit.expressions]

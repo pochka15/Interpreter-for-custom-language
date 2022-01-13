@@ -21,19 +21,24 @@ def root() -> Path:
     return Path(os.getenv('PROJECT_ROOT'))
 
 
+def interpret(snippet: str, grammar: str):
+    scanner = Scanner(grammar)
+    parser = RecursiveDescentParser(scanner)
+    interpreter = Interpreter(is_test=True)
+    with io.StringIO(snippet) as f:
+        return interpreter.interpret(
+            TreeTransformer().transform(
+                parser.parse(f)))
+
+
 def test_print_works(grammar: str):
     snippet = r"""
         main() None {
           let a int = 10
           test_print(str(a))
         }"""
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    with io.StringIO(snippet) as f:
-        outputs = Interpreter(is_test=True).interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
-        assert outputs[0] == '10'
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == '10'
 
 
 # Declare function. Call it form main().
@@ -48,14 +53,7 @@ def test_function_declaration(grammar: str):
         test_print(str(someValue()))
     }
     """
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    interpreter = Interpreter(is_test=True)
-    with io.StringIO(snippet) as f:
-        outputs = interpreter.interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
-
+    outputs = interpret(snippet, grammar)
     assert outputs[0] == '1'
 
 
@@ -65,14 +63,7 @@ def test_str_concatenation(grammar: str):
         test_print("Hello" + " " + "world")
     }    
     """
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    interpreter = Interpreter(is_test=True)
-    with io.StringIO(snippet) as f:
-        outputs = interpreter.interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
-
+    outputs = interpret(snippet, grammar)
     assert outputs[0] == "Hello world"
 
 
@@ -88,14 +79,7 @@ def test_function_arguments(grammar: str):
         test_print(format("Bob", 10))
     }    
     """
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    interpreter = Interpreter(is_test=True)
-    with io.StringIO(snippet) as f:
-        outputs = interpreter.interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
-
+    outputs = interpret(snippet, grammar)
     assert outputs[0] == 'Name: Bob, age: 10'
 
 
@@ -111,14 +95,7 @@ def test_nested_function_calls(grammar: str):
         test_print(str(sum(sum(sum(1, 2), 3), 4)))
     }    
     """
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    interpreter = Interpreter(is_test=True)
-    with io.StringIO(snippet) as f:
-        outputs = interpreter.interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
-
+    outputs = interpret(snippet, grammar)
     assert outputs[0] == str(1 + 2 + 3 + 4)
 
 
@@ -130,14 +107,7 @@ def test_additive_expression(grammar: str):
         test_print(str(1 + 2 - 3))
     }
     """
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    interpreter = Interpreter(is_test=True)
-    with io.StringIO(snippet) as f:
-        outputs = interpreter.interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
-
+    outputs = interpret(snippet, grammar)
     assert outputs[0] == '0'
 
 
@@ -154,14 +124,7 @@ def test_multiple_statements(grammar: str):
         test_print(someString())
     }
     """
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    interpreter = Interpreter(is_test=True)
-    with io.StringIO(snippet) as f:
-        outputs = interpreter.interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
-
+    outputs = interpret(snippet, grammar)
     assert outputs[0] == '3'
     assert outputs[1] == 'someString'
 
@@ -176,12 +139,16 @@ def test_reassignment(grammar: str):
         test_print(str(x))
     }
     """
-    scanner = Scanner(grammar)
-    parser = RecursiveDescentParser(scanner)
-    interpreter = Interpreter(is_test=True)
-    with io.StringIO(snippet) as f:
-        outputs = interpreter.interpret(
-            TreeTransformer().transform(
-                parser.parse(f)))
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == '2'
 
+
+def test_collection_literal(grammar: str):
+    snippet = r"""
+       main() None {
+           let elements List = [0, 1, 2]
+           test_print(str(elements[0 + 2]))
+       }
+       """
+    outputs = interpret(snippet, grammar)
     assert outputs[0] == '2'

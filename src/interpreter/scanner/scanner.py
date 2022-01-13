@@ -57,7 +57,7 @@ def build_matcher(name, s: str):
 
     # alternative matcher
     else:
-        # TODO(@pochka15): fix, it doesn't exclude the "ab|cd" case. when alternative is inside str
+        # Note: it doesn't work in case of an alternative in string like "a|b"
         entries = [it.strip() for it in s.split('|')]
         if len(entries) == 0:
             entries = [s.strip()]

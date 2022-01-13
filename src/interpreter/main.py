@@ -7,6 +7,7 @@ from interpreter.code_snippet_generation import with_italic_comments, with_pre_t
 from interpreter.interpretation import Interpreter
 from interpreter.parser.parser import RecursiveDescentParser
 from interpreter.scanner.scanner import Scanner
+from interpreter.semantic_analyzer import SemanticAnalyzer
 from interpreter.tree_transformer import TreeTransformer
 
 
@@ -42,6 +43,7 @@ def main():
     with open("../../test files/test_file_2.txt") as f:
         tree = parser.parse(f)
         transformed = TreeTransformer().transform(tree)
+        SemanticAnalyzer().analyze(transformed)
         Interpreter().interpret(transformed)
 
 

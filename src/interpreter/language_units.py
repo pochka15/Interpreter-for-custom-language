@@ -97,7 +97,7 @@ def custom_str(node: Union[AnyNode, Token]):
 
 @dataclass
 class PostfixUnaryExpression:
-    primary_expression: Union[TreeWithUnit, Name]
+    primary_expression: AnyNode
     suffixes: List[TreeWithUnit[PostfixUnarySuffix]]
 
     def __str__(self):
