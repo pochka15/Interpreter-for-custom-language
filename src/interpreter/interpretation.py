@@ -144,6 +144,23 @@ class Interpreter(Visitor):
 
         return value
 
+    def multiplicative_expression(self, node: TreeWithUnit[MultiplicativeExpression]):
+        children_iter = iter(node.unit.children)
+        value = self.eval(next(children_iter))
+        operator = next(children_iter, None)
+
+        while operator is not None:
+            next_val = self.eval(next(children_iter))
+            if operator == '*':
+                value = value * next_val
+            elif operator == '/':
+                value = value / next_val
+            elif operator == '%':
+                value = value % next_val
+            operator = next(children_iter, None)
+
+        return value
+
     def assignment(self, node: TreeWithUnit[Assignment]):
         right = self.eval(node.unit.right)
         left = node.unit.left

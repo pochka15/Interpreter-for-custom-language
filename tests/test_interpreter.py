@@ -191,3 +191,23 @@ def test_for_statement_with_no_cycles(grammar: str):
        """
     outputs = interpret(snippet, grammar)
     assert len(outputs) == 0
+
+
+def test_multiplication(grammar: str):
+    snippet = r"""
+       main() None {
+           test_print(str(2 * 3))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == '6'
+
+
+def test_reminder_operator(grammar: str):
+    snippet = r"""
+       main() None {
+           test_print(str(4 % 2))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == '0'
