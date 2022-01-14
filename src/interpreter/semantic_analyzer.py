@@ -107,18 +107,16 @@ class SemanticAnalyzer(Visitor):
     def assignment(self, node: TreeWithUnit[Assignment]):
         def update_variable_type_if_necessary(closure: Closure):
             if isinstance(node.unit.left, TreeWithUnit):
-                unit: VariableDeclaration = node.unit.left.unit
-                t = self.resolve_type(node.unit.left, closure)
-                if (isinstance(t, IterableType)
-                        and isinstance(t.item_type, UnknownIterableItemType)):
-                    closure[unit.variable_name].type = self.resolve_type(node.unit.right, closure)
+                left_unit: VariableDeclaration = node.unit.left.unit
+                left_type = self.resolve_type(node.unit.left, closure)
+                if (isinstance(left_type, IterableType)
+                        and isinstance(left_type.item_type, UnknownIterableItemType)):
+                    closure[left_unit.variable_name].type = self.resolve_type(node.unit.right, closure)
 
         def bind_value(closure: Closure):
             if isinstance(node.unit.left, TreeWithUnit):
                 name = node.unit.left.unit.variable_name
-            else:
-                name = node.unit.left
-            closure[name].is_bound = True
+                closure[name].is_bound = True
 
         def match_types_(closure):
             if isinstance(node.unit.left, TreeWithUnit):
@@ -143,7 +141,9 @@ class SemanticAnalyzer(Visitor):
                 variable = closure[left_unit.variable_name]
                 if variable is not None and variable.is_bound:
                     raise InvalidRedeclaration(
-                        f"variable with the name '{left_unit.variable_name}' cannot be declared again")
+                        f"variable with the name '{left_unit.variable_name}' cannot be declared again\n"
+                        f"{description(left_unit.variable_name)}")
+
             if isinstance(left, Name):
                 if closure[left].is_const:
                     raise ReassignException(f"Variable cannot be reassigned because it was declared as let\n"
@@ -160,6 +160,7 @@ class SemanticAnalyzer(Visitor):
     def statements_block(self, node: TreeWithUnit[StatementsBlock]):
         statements = node.unit.statements
         if len(statements) > 0:
+            assert isinstance(statements[-1], TreeWithUnit), "Statement is not a tree: " + description(statements[-1])
             statement = statements[-1].unit
             if isinstance(statement, ReturnStatement):
                 self.id_to_return_expression_node[node.identifier] = statement.expression

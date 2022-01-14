@@ -38,6 +38,13 @@ class Closure:
         return None
 
 
+def find_first_matching(pred, elements):
+    for ind, element in enumerate(elements):
+        if pred(element):
+            return ind, element
+    return -1, None
+
+
 class Interpreter(Visitor):
     def __init__(self, is_test=False):
         super().__init__()
@@ -68,7 +75,15 @@ class Interpreter(Visitor):
             return self.closure.lookup(node)
 
     def interpret(self, tree):
-        self.visit_once(tree)
+        self.closure.name_to_function['print'] = print
+        self.closure.name_to_function['str'] = str
+        self.closure.name_to_function['test_print'] = lambda it: self.test_outputs.append(it)
+        self.closure.name_to_function['append'] = lambda value, elements: elements.append(value)
+        self.closure.name_to_function['remove'] = lambda value, elements: elements.remove(value)
+        self.closure.name_to_function['len'] = lambda elements: len(elements)
+        self.closure.name_to_function['range'] = range
+        main = self.visit_once(tree)
+        main()
         if self.is_test:
             return self.test_outputs
 
@@ -85,24 +100,9 @@ class Interpreter(Visitor):
         return ret
 
     def start(self, node: TreeWithUnit[Start]):
-        # Add builtins
-        self.closure.name_to_function['print'] = print
-        self.closure.name_to_function['str'] = str
-        self.closure.name_to_function['test_print'] = lambda it: self.test_outputs.append(it)
-        self.closure.name_to_function['append'] = lambda value, elements: elements.append(value)
-        self.closure.name_to_function['remove'] = lambda value, elements: elements.remove(value)
-        self.closure.name_to_function['len'] = lambda elements: len(elements)
-        self.closure.name_to_function['range'] = range
-
-        # Visit function declarations
         for x in node.unit.function_declarations:
             self.visit_once(x)
-
-        # Visit main's statements block
-        main: TreeWithUnit[FunctionDeclaration] = [
-            x for x in node.unit.function_declarations
-            if str(x.unit.name) == 'main'][0]
-        self.visit_once(main.unit.statements_block)
+        return self.closure.lookup('main')
 
     def function_declaration(self, node: TreeWithUnit[FunctionDeclaration]):
         def fn(*args):
@@ -251,3 +251,16 @@ class Interpreter(Visitor):
 
     def parenthesized_expression(self, node: TreeWithUnit[ParenthesizedExpression]):
         return self.eval(node.unit.child)
+
+    def if_expression(self, node: TreeWithUnit[IfExpression]):
+        conditions = [node.unit.condition] + [x.unit.condition for x in node.unit.elif_expressions]
+        ind, condition = find_first_matching(lambda x: self.eval(x) is True, conditions)
+        if ind < 0 and node.unit.optional_else is not None:
+            return self.eval(node.unit.optional_else)
+        if ind == 0:
+            return self.eval(node.unit.statements_block)
+        ind = ind - 1
+        return self.eval(node.unit.elif_expressions[ind].unit.statements_block)
+
+    def else_expression(self, node: TreeWithUnit[ElseExpression]):
+        return self.eval(node.unit.statements_block)

@@ -1,0 +1,11 @@
+recursive(n int) int {
+    ret if n <= 1 {
+        ret n
+    } else {
+        ret recursive(n - 1)
+    }
+}
+
+main() None {
+    print(recursive(3))
+}

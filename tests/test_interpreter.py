@@ -281,3 +281,85 @@ def test_parenthesized_expression(grammar: str):
        """
     outputs = interpret(snippet, grammar)
     assert outputs[0] == 'True'
+
+
+def test_if_expression(grammar: str):
+    snippet = r"""
+           main() None {
+               let ok bool = true
+               if ok { test_print("ok") }
+           }
+           """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'ok'
+
+
+def test_if_expression_with_ret_value(grammar: str):
+    snippet = r"""
+           main() None {
+               let ok bool = true
+               let res int = if ok { ret 1 } else { ret 2 }
+               test_print(str(res))
+           }
+           """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == '1'
+
+
+def test_elif_expressions(grammar: str):
+    snippet = r"""
+cond1() bool {
+    test_print("cond1")
+    ret false
+}
+
+cond2() bool {
+    test_print("cond2")
+    ret false
+}
+
+cond3() bool {
+    test_print("cond3")
+    ret true
+}
+
+main() None {
+    let res int = if cond1() {
+        test_print("inside cond1")
+        ret 1
+    } elif cond2() {
+        test_print("inside cond2")
+        ret 2 
+    } elif cond3() {
+        test_print("inside cond3")
+        ret 3
+    } else {
+        test_print("inside else")
+        ret 4
+    }
+    test_print(str(res))
+}
+           """
+    outputs = interpret(snippet, grammar)
+    assert len(outputs) == 5, str(outputs)
+    assert outputs[0] == 'cond1'
+    assert outputs[1] == 'cond2'
+    assert outputs[2] == 'cond3'
+    assert outputs[3] == 'inside cond3'
+    assert outputs[4] == '3'
+
+
+def test_if_else_expression(grammar: str):
+    snippet = r"""
+main() None {
+    let n int = 2
+    if n <= 1 {
+        ret n
+    } else {
+        test_print("else")
+        ret 3
+    }
+}
+           """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'else'

@@ -1,0 +1,13 @@
+recur_fibo(n int) int {
+    ret if n <= 1 {
+        ret n
+    } else {
+        ret recur_fibo(n-1) + recur_fibo(n-2)
+    }
+}
+
+main() None {
+    let amount int = 10
+    print("Fibonacci sequence:")
+    for i in range(amount) { print(recur_fibo(i)) }
+}

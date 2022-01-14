@@ -1,7 +1,7 @@
 #T
 main () None {
     # constant
-    let elements List = [1, 2, 3]
+    let elements IntList = [1, 2, 3]
 
     print_at_even_pos(elements)
     
@@ -22,7 +22,7 @@ print_at_even_pos (elements IntList) None {
     var i int = 0
     for val in elements {
         let is_even bool = i % 2 == 0
-        print(if is_even { str(val) } else { "" })
+        print(if is_even { ret str(val) } else { ret "" })
         i = i + 1
     }
 }
