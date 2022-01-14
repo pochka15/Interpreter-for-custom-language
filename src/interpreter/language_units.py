@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from textwrap import indent
 from typing import List, Union, Optional, TypeVar, Generic, Any
 
-from lark import Tree, Token
+from lark import Tree
 
 
 class UnitType:
@@ -49,7 +49,7 @@ class FunctionType(UnitType):
 
 
 T = TypeVar("T")
-Name = Token
+Name = str
 
 
 def curly_block(inner: str, indentation_level=1):
@@ -112,13 +112,13 @@ class Typed(ABC):
 @dataclass
 class SimpleLiteral(Typed):
     value: Any
-    origin: Token
+    line: str
 
     def __repr__(self):
-        return self.origin.__repr__()
+        return str(self.value)
 
     def __str__(self):
-        return self.origin
+        return str(self.value)
 
     @property
     def type(self) -> Optional[UnitType]:
@@ -130,7 +130,7 @@ AnyNode = Union[Name, SimpleLiteral, TreeWithUnit]
 
 @dataclass
 class Type:
-    simple_types: List[Token]
+    simple_types: List[str]
 
     def __str__(self):
         return str(self.as_unit_type)
@@ -159,7 +159,7 @@ class PrimaryExpression:
 
 @dataclass
 class FunctionParameter(Typed):
-    name: Token
+    name: Name
     type_node: TreeWithUnit[Type]
 
     def __str__(self):
@@ -184,8 +184,8 @@ class StatementsBlock:
 
 @dataclass
 class VariableDeclaration(Typed):
-    var_or_let: Token
-    variable_name: Token
+    var_or_let: str
+    variable_name: Name
     type_node: TreeWithUnit[Type]
 
     def __str__(self):
@@ -203,11 +203,9 @@ class PostfixUnarySuffix:
     pass
 
 
-def custom_str(node: Union[AnyNode, Token]):
+def custom_str(node: Union[AnyNode, str]):
     if isinstance(node, TreeWithUnit):
         return str(node.unit)
-    elif isinstance(node, SimpleLiteral):
-        return node.origin
     return str(node)
 
 
@@ -236,15 +234,14 @@ class PostfixUnaryExpression(Resolvable):
 
 @dataclass
 class PrefixUnaryExpression(Resolvable):
-    prefix_operator: Optional[Token]
+    prefix_operator: str
     postfix_unary_expression: AnyNode
 
     def resolve_type(self, resolve_type_func) -> Optional[UnitType]:
         return resolve_type_func(self.postfix_unary_expression)
 
     def __str__(self):
-        operator = "" if self.prefix_operator is None else self.prefix_operator
-        return operator + custom_str(self.postfix_unary_expression)
+        return self.prefix_operator + custom_str(self.postfix_unary_expression)
 
 
 @dataclass
@@ -285,7 +282,7 @@ class Comparison(Typed):
 
 @dataclass
 class Equality(Typed):
-    comparison_and_operators: List[Union[AnyNode, Token]]
+    comparison_and_operators: List[Union[AnyNode, str]]
 
     @property
     def type(self) -> Optional[UnitType]:
@@ -349,7 +346,7 @@ class CollectionLiteral(PrimaryExpression, Resolvable):
 
 @dataclass
 class ForStatement(Statement):
-    name: Token
+    name: Name
     expression: AnyNode
     statements_block: TreeWithUnit[StatementsBlock]
 
@@ -411,7 +408,7 @@ class IndexingSuffix(PostfixUnarySuffix):
 
 @dataclass
 class NavigationSuffix(PostfixUnarySuffix):
-    name: Token
+    name: Name
 
     def __str__(self):
         return "." + self.name
@@ -430,16 +427,15 @@ class ReturnStatement:
 
 @dataclass
 class FunctionDeclaration:
-    name: Token
+    name: Name
     function_parameters: List[TreeWithUnit[FunctionParameter]]
-    return_type: Token
+    return_type: str
     statements_block: TreeWithUnit[StatementsBlock]
 
     def __str__(self):
         parameters = " ".join(custom_str(x) for x in self.function_parameters)
         parentheses = "()" if parameters == '' else "(" + parameters + ")"
-        return self.name + parentheses + " " + self.return_type + " " + curly_block(
-            custom_str(custom_str(self.statements_block)))
+        return self.name + parentheses + " " + self.return_type + " " + curly_block(custom_str(self.statements_block))
 
 
 @dataclass
@@ -453,11 +449,11 @@ class Start:
 @dataclass
 class Assignment(Statement):
     left: Union[TreeWithUnit[VariableDeclaration], Name]
-    operator: Token
+    operator: str
     right: AnyNode
 
     def __str__(self):
-        return f"{custom_str(self.left)} {str(self.operator)} {custom_str(self.right)}"
+        return f"{custom_str(self.left)} {self.operator} {custom_str(self.right)}"
 
 
 @dataclass

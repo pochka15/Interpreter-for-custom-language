@@ -40,7 +40,7 @@ def main():
         data = f.read()
     scanner = Scanner(data)
     parser = RecursiveDescentParser(scanner)
-    with open("../../test files/test_file_1.txt") as f:
+    with open("../../test files/recursive_fibo.txt") as f:
         tree = parser.parse(f)
         transformed = TreeTransformer().transform(tree)
         SemanticAnalyzer().analyze(transformed)

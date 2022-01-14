@@ -27,11 +27,12 @@ class TypeMismatchException(Exception):
 
 def description(node: AnyNode):
     if isinstance(node, TreeWithUnit):
-        return str(node.unit)
+        if node.meta.line is None:
+            return str(node.unit)
+        return f"line: {node.meta.line}, {node.unit}"
     if isinstance(node, SimpleLiteral):
-        return f"line: {node.origin.line}, {node.origin}"
-    elif isinstance(node, Name):
         return f"line: {node.line}, {node}"
+    return str(node)
 
 
 def resolve_closure_item_type(item: ClosureItem) -> UnitType:
