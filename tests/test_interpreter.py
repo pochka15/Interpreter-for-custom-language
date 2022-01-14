@@ -152,3 +152,17 @@ def test_collection_literal(grammar: str):
        """
     outputs = interpret(snippet, grammar)
     assert outputs[0] == '2'
+
+
+def test_boolean_expression(grammar: str):
+    snippet = r"""
+       main() None {
+           let condition1 bool = true
+           let condition2 bool = false
+           test_print(str(condition1))
+           test_print(str(condition2))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'True'
+    assert outputs[1] == 'False'

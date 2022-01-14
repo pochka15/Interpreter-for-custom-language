@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from typing import List, Dict, Union
 
+from interpreter.language_units import UnitType
+
 
 @dataclass
 class Variable:
     name: str
-    type: str
+    type: UnitType
     is_bound: bool = False
     is_const: bool = False
 
@@ -13,7 +15,7 @@ class Variable:
 @dataclass
 class Function:
     name: str
-    return_type: str
+    return_type: UnitType
     params: List[Variable]
 
 
