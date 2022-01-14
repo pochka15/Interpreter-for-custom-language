@@ -248,3 +248,6 @@ class Interpreter(Visitor):
             operator = next(children_iter, None)
 
         return value
+
+    def parenthesized_expression(self, node: TreeWithUnit[ParenthesizedExpression]):
+        return self.eval(node.unit.child)

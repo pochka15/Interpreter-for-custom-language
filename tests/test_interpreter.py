@@ -268,3 +268,16 @@ def test_less_or_equal(grammar: str):
        """
     outputs = interpret(snippet, grammar)
     assert outputs[0] == 'True'
+
+
+def test_parenthesized_expression(grammar: str):
+    snippet = r"""
+       main() None {
+           test_print(
+                (str(
+                (1 <= (2)) == (true)
+                )))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'True'
