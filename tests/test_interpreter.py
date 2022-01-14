@@ -211,3 +211,27 @@ def test_reminder_operator(grammar: str):
        """
     outputs = interpret(snippet, grammar)
     assert outputs[0] == '0'
+
+
+def test_list_append(grammar: str):
+    snippet = r"""
+       main() None {
+           let elements IntList = [1, 2]
+           append(3, elements)
+           test_print(str(elements))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == '[1, 2, 3]'
+
+
+def test_list_remove(grammar: str):
+    snippet = r"""
+       main() None {
+           let elements IntList = [1, 2]
+           remove(2, elements)
+           test_print(str(elements))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == '[1]'
