@@ -104,18 +104,9 @@ def test_collection_literal_type_mismatch(grammar: str):
         analyze(snippet, grammar)
 
 
-def test_empty_collection_initialization_expect_exception(grammar: str):
+def test_empty_collection_initialization(grammar: str):
     snippet = r"""
             main() None {
               let elements List = []
-            }"""
-    with pytest.raises(Exception):
-        analyze(snippet, grammar)
-
-
-def test_initialize_collection_using_builtin(grammar: str):
-    snippet = r"""
-            main() None {
-              let elements List = intList()
             }"""
     analyze(snippet, grammar)

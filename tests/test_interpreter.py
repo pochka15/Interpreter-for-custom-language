@@ -184,7 +184,7 @@ def test_for_statement(grammar: str):
 def test_for_statement_with_no_cycles(grammar: str):
     snippet = r"""
        main() None {
-           for x in intList() {
+           for x in [] {
                 test_print(x)
            }
        }

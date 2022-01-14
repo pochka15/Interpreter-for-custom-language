@@ -88,7 +88,6 @@ class Interpreter(Visitor):
         self.closure.name_to_function['print'] = print
         self.closure.name_to_function['str'] = str
         self.closure.name_to_function['test_print'] = lambda it: self.test_outputs.append(it)
-        self.closure.name_to_function['intList'] = list
 
         # Visit function declarations
         for x in node.unit.function_declarations:

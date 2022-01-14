@@ -86,28 +86,9 @@ class SemanticAnalyzer(Visitor):
 
     def analyze(self, tree):
         self.visit(tree)
-        self.add_builtins()
         for task in self.delayed_tasks:
             task()
         return self.main_func
-
-    def add_builtins(self):
-        self.closure.name_to_item["intList"] = Function(
-            "intList",
-            IterableType(SimpleType("int")),
-            [])
-        self.closure.name_to_item["strList"] = Function(
-            "strList",
-            IterableType(SimpleType("str")),
-            [])
-        self.closure.name_to_item["floatList"] = Function(
-            "floatList",
-            IterableType(SimpleType("float")),
-            [])
-        self.closure.name_to_item["boolList"] = Function(
-            "boolList",
-            IterableType(SimpleType("bool")),
-            [])
 
     # noinspection PyMethodMayBeStatic
     def start(self, node: TreeWithUnit[Start]):
@@ -190,11 +171,6 @@ class SemanticAnalyzer(Visitor):
 
     def postfix_unary_expression(self, node: TreeWithUnit[PostfixUnaryExpression]):
         pass
-
-    # noinspection PyMethodMayBeStatic
-    def collection_literal(self, node: TreeWithUnit[CollectionLiteral]):
-        assert len(node.unit.expressions) > 0, "Cannot infer type of empty collection literal, " \
-                                               "use builtin functions like intList() to initialize a collection"
 
     def call_suffix(self, node: TreeWithUnit[CallSuffix]):
         if isinstance(node.unit, NavigationSuffix):
