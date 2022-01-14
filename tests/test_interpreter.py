@@ -235,3 +235,14 @@ def test_list_remove(grammar: str):
        """
     outputs = interpret(snippet, grammar)
     assert outputs[0] == '[1]'
+
+
+def test_equality(grammar: str):
+    snippet = r"""
+       main() None {
+           let same bool = 1 == 2
+           test_print(str(same))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'False'

@@ -1,15 +1,16 @@
 #T
-main () void {
+main () None {
     # constant
     let elements List = [1, 2, 3]
 
     print_at_even_pos(elements)
     
-    let last int = elements[elements.size() - 1]
-    print(elements.add(add_one(last)))
+    let last int = elements[len(elements) - 1]
+    append(add_one(last), elements)
+    print(elements)
 }
 
-tmp () void {
+tmp () str {
     ret "hello"
 }
 
@@ -17,11 +18,11 @@ add_one (element int) int {
      ret element + 1
 }
 
-print_at_even_pos (elements List) void {
+print_at_even_pos (elements IntList) None {
     var i int = 0
     for val in elements {
         let is_even bool = i % 2 == 0
-        print(if is_even { toString(val) } else { "" })
+        print(if is_even { str(val) } else { "" })
         i = i + 1
     }
 }

@@ -284,12 +284,12 @@ class Comparison(Resolvable):
 
 
 @dataclass
-class Equality(Resolvable):
+class Equality(Typed):
     comparison_and_operators: List[Union[AnyNode, Token]]
 
-    def resolve_type(self, resolve_type_func) -> Optional[UnitType]:
-        # It's assumed that all the children have the same type
-        return resolve_type_func(self.comparison_and_operators[0])
+    @property
+    def type(self) -> Optional[UnitType]:
+        return SimpleType("bool")
 
     def __str__(self):
         return " ".join(custom_str(exp) for exp in self.comparison_and_operators)

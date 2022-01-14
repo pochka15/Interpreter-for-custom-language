@@ -3,6 +3,7 @@ from typing import Dict
 from lark import Visitor
 
 from interpreter.language_units import *
+from interpreter.semantic_analyzer import description
 
 
 def is_val(tree: Tree):
@@ -90,6 +91,7 @@ class Interpreter(Visitor):
         self.closure.name_to_function['test_print'] = lambda it: self.test_outputs.append(it)
         self.closure.name_to_function['append'] = lambda value, elements: elements.append(value)
         self.closure.name_to_function['remove'] = lambda value, elements: elements.remove(value)
+        self.closure.name_to_function['len'] = lambda elements: len(elements)
 
         # Visit function declarations
         for x in node.unit.function_declarations:
@@ -183,7 +185,8 @@ class Interpreter(Visitor):
         return fn(*args)
 
     def postfix_unary_expression(self, node: TreeWithUnit[PostfixUnaryExpression]):
-        assert len(node.unit.suffixes) == 1, "More than one suffix can not be interpreted yet"
+        assert len(node.unit.suffixes) == 1, \
+            "More than one suffix can not be interpreted yet: " + description(node)
         suffix = node.unit.suffixes[0]
 
         expression = self.eval(node.unit.primary_expression)
@@ -209,6 +212,21 @@ class Interpreter(Visitor):
             self.closure.name_to_value[name] = value
             self.visit_once(node.unit.statements_block)
 
-        items = self.visit_once(node.unit.expression)
+        items = self.eval(node.unit.expression)
         for item in items:
             self.eval_in_closure(lambda: func(node.unit.name, item))
+
+    def equality(self, node: TreeWithUnit[Equality]):
+        children_iter = iter(node.unit.comparison_and_operators)
+        value = self.eval(next(children_iter))
+        operator = next(children_iter, None)
+
+        while operator is not None:
+            next_val = self.eval(next(children_iter))
+            if operator == '==':
+                value = value == next_val
+            elif operator == '!=':
+                value = value / next_val
+            operator = next(children_iter, None)
+
+        return value
