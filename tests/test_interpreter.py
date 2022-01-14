@@ -246,3 +246,25 @@ def test_equality(grammar: str):
        """
     outputs = interpret(snippet, grammar)
     assert outputs[0] == 'False'
+
+
+def test_comparison(grammar: str):
+    snippet = r"""
+       main() None {
+           let greater bool = 2 > 1
+           test_print(str(greater))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'True'
+
+
+def test_less_or_equal(grammar: str):
+    snippet = r"""
+       main() None {
+           let le bool = 1 <= 2
+           test_print(str(le))
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'True'

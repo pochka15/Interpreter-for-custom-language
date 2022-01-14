@@ -272,12 +272,12 @@ class AdditiveExpression(Resolvable):
 
 
 @dataclass
-class Comparison(Resolvable):
+class Comparison(Typed):
     children: List[AnyNode]
 
-    def resolve_type(self, resolve_type_func) -> Optional[UnitType]:
-        # It's assumed that all the children have the same type
-        return resolve_type_func(self.children[0])
+    @property
+    def type(self) -> Optional[UnitType]:
+        return SimpleType("bool")
 
     def __str__(self):
         return " ".join(custom_str(it.unit) for it in self.children)
@@ -296,24 +296,24 @@ class Equality(Typed):
 
 
 @dataclass
-class Conjunction(Resolvable):
+class Conjunction(Typed):
     equalities: List[AnyNode]
 
-    def resolve_type(self, resolve_type_func) -> Optional[UnitType]:
-        # It's assumed that all the children have the same type
-        return resolve_type_func(self.equalities[0])
+    @property
+    def type(self) -> Optional[UnitType]:
+        return SimpleType("bool")
 
     def __str__(self):
         return " and ".join(custom_str(eq) for eq in self.equalities)
 
 
 @dataclass
-class Disjunction(Resolvable):
+class Disjunction(Typed):
     conjunctions: List[AnyNode]
 
-    def resolve_type(self, resolve_type_func) -> Optional[UnitType]:
-        # It's assumed that all the children have the same type
-        return resolve_type_func(self.conjunctions[0])
+    @property
+    def type(self) -> Optional[UnitType]:
+        return SimpleType("bool")
 
     def __str__(self):
         return " or ".join(custom_str(con) for con in self.conjunctions)

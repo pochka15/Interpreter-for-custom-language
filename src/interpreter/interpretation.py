@@ -92,6 +92,7 @@ class Interpreter(Visitor):
         self.closure.name_to_function['append'] = lambda value, elements: elements.append(value)
         self.closure.name_to_function['remove'] = lambda value, elements: elements.remove(value)
         self.closure.name_to_function['len'] = lambda elements: len(elements)
+        self.closure.name_to_function['range'] = range
 
         # Visit function declarations
         for x in node.unit.function_declarations:
@@ -218,15 +219,32 @@ class Interpreter(Visitor):
 
     def equality(self, node: TreeWithUnit[Equality]):
         children_iter = iter(node.unit.comparison_and_operators)
+        left = self.eval(next(children_iter))
+        operator = next(children_iter, None)
+        right = self.eval(next(children_iter))
+        if operator == '==':
+            res = left == right
+        else:
+            res = left != right
+
+        return res
+
+    def comparison(self, node: TreeWithUnit[Comparison]):
+        children_iter = iter(node.unit.children)
         value = self.eval(next(children_iter))
         operator = next(children_iter, None)
 
         while operator is not None:
             next_val = self.eval(next(children_iter))
-            if operator == '==':
-                value = value == next_val
-            elif operator == '!=':
-                value = value / next_val
+            if operator == '<':
+                value = value < next_val
+            elif operator == '>':
+                value = value > next_val
+            elif operator == '>=':
+                value = value >= next_val
+            elif operator == '<=':
+                value = value <= next_val
+
             operator = next(children_iter, None)
 
         return value
