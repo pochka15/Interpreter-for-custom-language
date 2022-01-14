@@ -71,7 +71,7 @@ class Interpreter(Visitor):
         if self.is_test:
             return self.test_outputs
 
-    def new_closure(self, func):
+    def eval_in_closure(self, func):
         """
         Utility function that evaluates given function in a new nested closure
         :param func: function that is called
@@ -88,6 +88,7 @@ class Interpreter(Visitor):
         self.closure.name_to_function['print'] = print
         self.closure.name_to_function['str'] = str
         self.closure.name_to_function['test_print'] = lambda it: self.test_outputs.append(it)
+        self.closure.name_to_function['intList'] = list
 
         # Visit function declarations
         for x in node.unit.function_declarations:
@@ -109,7 +110,7 @@ class Interpreter(Visitor):
                     self.closure.name_to_value[param.unit.name] = arg
                 return self.visit_once(node.unit.statements_block)
 
-            return self.new_closure(inner)
+            return self.eval_in_closure(inner)
 
         name = node.unit.name
         self.closure.name_to_function[name] = fn
@@ -124,7 +125,7 @@ class Interpreter(Visitor):
                     return_value = value
             return return_value
 
-        return self.new_closure(inner)
+        return self.eval_in_closure(inner)
 
     def return_statement(self, node: TreeWithUnit[ReturnStatement]) -> Any:
         return self.eval(node.unit.expression)
@@ -145,7 +146,7 @@ class Interpreter(Visitor):
         return value
 
     def assignment(self, node: TreeWithUnit[Assignment]):
-        value = self.eval(node.unit.right)
+        right = self.eval(node.unit.right)
         left = node.unit.left
         # Variable declaration
         if isinstance(node.unit.left, TreeWithUnit):
@@ -155,7 +156,7 @@ class Interpreter(Visitor):
         # Reassignment
         else:
             name = left
-        self.closure.name_to_value[name] = value
+        self.closure.name_to_value[name] = right
 
     def call_func(self, name: str, args):
         fn = self.closure.lookup(name)
@@ -171,9 +172,9 @@ class Interpreter(Visitor):
         result = None
 
         if isinstance(suffix.unit, CallSuffix):
-            func = expression
             expressions = suffix.unit.function_call_arguments
             arguments = [self.eval(expr) for expr in expressions]
+            func = expression
             result = func(*arguments)
 
         if isinstance(suffix.unit, IndexingSuffix):
@@ -184,3 +185,12 @@ class Interpreter(Visitor):
 
     def collection_literal(self, node: TreeWithUnit[CollectionLiteral]) -> List:
         return [self.eval(expr) for expr in node.unit.expressions]
+
+    def for_statement(self, node: TreeWithUnit[ForStatement]):
+        def func(name, value):
+            self.closure.name_to_value[name] = value
+            self.visit_once(node.unit.statements_block)
+
+        items = self.visit_once(node.unit.expression)
+        for item in items:
+            self.eval_in_closure(lambda: func(node.unit.name, item))

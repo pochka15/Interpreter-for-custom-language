@@ -166,3 +166,28 @@ def test_boolean_expression(grammar: str):
     outputs = interpret(snippet, grammar)
     assert outputs[0] == 'True'
     assert outputs[1] == 'False'
+
+
+def test_for_statement(grammar: str):
+    snippet = r"""
+       main() None {
+           for x in ["Hello", "world"] {
+                test_print(x)
+           }
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert outputs[0] == 'Hello'
+    assert outputs[1] == 'world'
+
+
+def test_for_statement_with_no_cycles(grammar: str):
+    snippet = r"""
+       main() None {
+           for x in intList() {
+                test_print(x)
+           }
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert len(outputs) == 0

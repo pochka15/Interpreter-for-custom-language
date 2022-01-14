@@ -139,9 +139,17 @@ class Type:
     def as_unit_type(self) -> Optional[UnitType]:
         if len(self.simple_types) > 1:
             raise Exception("Compound type is not supported: " + ".".join(t for t in self.simple_types))
-        if self.simple_types[0] == "List":
-            return IterableType(UnknownIterableItemType())
-        return SimpleType(self.simple_types[0])
+        type_ = self.simple_types[0]
+        # Type can be e.x. IntList or BoolList. We convert it to the IterableType[int], IterableType[bool]
+        if type_.endswith("List"):
+            item_type = type_[:-len("List")]
+            if item_type == '':
+                return IterableType(UnknownIterableItemType())
+
+            # lower first letter
+            item_type = item_type[:1].lower() + item_type[1:]
+            return IterableType(SimpleType(item_type))
+        return SimpleType(type_)
 
 
 @dataclass
