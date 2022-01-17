@@ -426,6 +426,13 @@ class ReturnStatement:
 
 
 @dataclass
+class BreakStatement:
+
+    def __str__(self):
+        return "break"
+
+
+@dataclass
 class FunctionDeclaration:
     name: Name
     function_parameters: List[TreeWithUnit[FunctionParameter]]

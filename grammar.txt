@@ -86,9 +86,11 @@ collection_literal: "[" expression ("," expression)* "]" | "[" "]"
 
 // Inline
 jump_statement: return_statement
-  | BREAK
+  | break_statement
 
 return_statement: RETURN expression?
+
+break_statement: BREAK
 
 if_expression: IF expression "{" statements_block "}"
   | IF expression "{" statements_block "}" elseif_expression* else_expression?
@@ -114,6 +116,7 @@ LET: "let"
 VAR: "var"
 NAME: /(?!(if|elif|or|and|for|while|true|false|ret|break|else|in|var|let)\b)[a-zA-Z_][a-zA-Z_0-9]*/
 ASSIGNMENT_OPERATOR: "="
+BREAK: "break"
 
 COMMENT: /#[^\r\n]*/
 
@@ -123,7 +126,6 @@ NEWLINE: /[\r\n]/
 
 // Non-terminals
 RETURN: "ret"
-BREAK: "break"
 ELSE: "else"
 ELIF: "elif"
 FOR: "for"

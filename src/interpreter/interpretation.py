@@ -63,12 +63,20 @@ def find_first_matching(pred, elements):
     return -1, None
 
 
+class LoopContext:
+
+    def __init__(self, parent_context) -> None:
+        self.should_break = False
+        self._parent_context = parent_context
+
+
 class Interpreter(Visitor):
     def __init__(self, is_test=False):
         super().__init__()
         self.is_test = is_test
         self.test_outputs: List[str] = []
         self.closure = Closure()
+        self.loopContext: Optional[LoopContext] = None
 
     # noinspection PyUnresolvedReferences
     def visit_once(self, node: TreeWithUnit) -> Any:
@@ -142,6 +150,8 @@ class Interpreter(Visitor):
             statements = node.unit.statements
             return_value = None
             for x in statements:
+                if self.loopContext is not None and self.loopContext.should_break:
+                    break
                 value = self.visit_once(x)
                 if isinstance(x, TreeWithUnit) and isinstance(x.unit, ReturnStatement):
                     return_value = value
@@ -151,6 +161,9 @@ class Interpreter(Visitor):
 
     def return_statement(self, node: TreeWithUnit[ReturnStatement]) -> Any:
         return self.eval(node.unit.expression)
+
+    def break_statement(self, _) -> Any:
+        self.loopContext.should_break = True
 
     def additive_expression(self, node: TreeWithUnit[AdditiveExpression]):
         children_iter = iter(node.unit.children)
@@ -229,19 +242,25 @@ class Interpreter(Visitor):
         return [self.eval(expr) for expr in node.unit.expressions]
 
     def for_statement(self, node: TreeWithUnit[ForStatement]):
-        def func(name, value):
+        def exec_loop(items_):
+            for item in items_:
+                self.eval_in_closure(lambda: exec_statements_block(node.unit.name, item))
+
+        def exec_statements_block(name, value):
             self.closure.assign_value(name, value)
             self.visit_once(node.unit.statements_block)
 
         items = self.eval(node.unit.expression)
-        for item in items:
-            self.eval_in_closure(lambda: func(node.unit.name, item))
+        self.eval_in_loop_context(lambda: exec_loop(items))
 
     def while_statement(self, node: TreeWithUnit[WhileStatement]):
-        should_continue = self.eval(node.unit.expression)
-        while should_continue:
-            self.visit_once(node.unit.statements_block)
+        def exec_loop():
             should_continue = self.eval(node.unit.expression)
+            while should_continue and not self.loopContext.should_break:
+                self.visit_once(node.unit.statements_block)
+                should_continue = self.eval(node.unit.expression)
+
+        self.eval_in_loop_context(exec_loop)
 
     def equality(self, node: TreeWithUnit[Equality]):
         children_iter = iter(node.unit.comparison_and_operators)
@@ -281,12 +300,21 @@ class Interpreter(Visitor):
     def if_expression(self, node: TreeWithUnit[IfExpression]):
         conditions = [node.unit.condition] + [x.unit.condition for x in node.unit.elif_expressions]
         ind, condition = find_first_matching(lambda x: self.eval(x) is True, conditions)
-        if ind < 0 and node.unit.optional_else is not None:
-            return self.eval(node.unit.optional_else)
-        if ind == 0:
+        if ind < 0:
+            if node.unit.optional_else is not None:
+                return self.eval(node.unit.optional_else)
+        elif ind == 0:
             return self.eval(node.unit.statements_block)
-        ind = ind - 1
-        return self.eval(node.unit.elif_expressions[ind].unit.statements_block)
+        else:
+            ind = ind - 1
+            return self.eval(node.unit.elif_expressions[ind].unit.statements_block)
 
     def else_expression(self, node: TreeWithUnit[ElseExpression]):
         return self.eval(node.unit.statements_block)
+
+    def eval_in_loop_context(self, func):
+        parent = self.loopContext
+        self.loopContext = LoopContext(parent)
+        ret = func()
+        self.loopContext = parent
+        return ret

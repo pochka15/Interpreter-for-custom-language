@@ -141,13 +141,17 @@ class RecursiveDescentParser:
                     return self.assignment_starting_from_name(expression)
                 return self.expression(expression)
 
-    # Inline jump_statement: return_expression | BREAK
+    # Inline jump_statement: return_expression | break_statement
     def jump_statement(self) -> Tree:
         if match(self.tokens_controller.peek(), Tk.RETURN):
             return self.return_statement()
+        return self.break_statement()
+
+    # break_statement: BREAK
+    def break_statement(self) -> Tree:
         token = self.tokens_controller.next()
         strict_match(token, Tk.BREAK)
-        return token
+        return Tree("break_statement", [token])
 
     # Inline expression: disjunction
     def expression(self, prebuilt_prefix_unary_expression: Optional = None) -> Tree:

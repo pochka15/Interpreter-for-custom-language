@@ -205,3 +205,8 @@ class TreeTransformer(Transformer):
         children = node.children
         node.meta.line = get_line(children[0])
         return TreeWithUnit(node, Type(children), self.next_id())
+
+    def break_statement(self, node):
+        children = node.children
+        node.meta.line = get_line(children[0])
+        return TreeWithUnit(node, BreakStatement(), self.next_id())

@@ -212,6 +212,38 @@ def test_while_statement(grammar: str):
     assert outputs[4] == '4'
 
 
+def test_while_with_break_statement(grammar: str):
+    snippet = r"""
+       main() None {
+           var x int = 0
+           while x < 5 {
+                if x > 2 { break }
+                test_print(str(x))
+                x = x + 1
+           }
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert len(outputs) == 3
+    assert outputs[0] == '0'
+    assert outputs[1] == '1'
+    assert outputs[2] == '2'
+
+
+def test_for_with_break_statement(grammar: str):
+    snippet = r"""
+       main() None {
+           for x in ["a", "b", "c"] {
+             if x == "b" {break} 
+             test_print(x)
+           }
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert len(outputs) == 1
+    assert outputs[0] == 'a'
+
+
 def test_multiplication(grammar: str):
     snippet = r"""
        main() None {

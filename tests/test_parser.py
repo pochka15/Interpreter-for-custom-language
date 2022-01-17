@@ -692,3 +692,78 @@ def test_reassignment(parser: RecursiveDescentParser):
     with io.StringIO(snippet) as f:
         res, msg = compare_trees(expected, parser.parse(f))
         assert res, msg
+
+
+# noinspection PyTypeChecker
+def test_while_with_break(parser: RecursiveDescentParser):
+    snippet = r"""
+       main() None {
+           var x int = 0
+           while x < 5 {
+                if x > 2 { break }
+                test_print(str(x))
+                x = x + 1
+           }
+       }"""
+    expected = Tree('start', [Tree('function_declaration',
+                                   [Token('NAME', 'main'), Tree('function_parameters', []), Token('NAME', 'None'),
+                                    Tree('statements_block', [
+                                        Tree('assignment', [
+                                            Tree('variable_declaration',
+                                                 [Token('VAR', 'var'),
+                                                  Token('NAME', 'x'), Tree('type',
+                                                                           [Token(
+                                                                               'NAME',
+                                                                               'int')])]),
+                                            Token('ASSIGNMENT_OPERATOR', '='),
+                                            Token('DEC_NUMBER', '0')]),
+                                        Tree('while_statement', [
+                                            Tree('comparison',
+                                                 [Token('NAME', 'x'), Token(
+                                                     'COMPARISON_OPERATOR',
+                                                     '<'),
+                                                  Token('DEC_NUMBER', '5')]),
+                                            Tree('statements_block', [
+                                                Tree('if_expression', [
+                                                    Tree('comparison',
+                                                         [Token('NAME', 'x'),
+                                                          Token(
+                                                              'COMPARISON_OPERATOR',
+                                                              '>'),
+                                                          Token('DEC_NUMBER',
+                                                                '2')]),
+                                                    Tree('statements_block',
+                                                         [Tree(
+                                                             'break_statement',
+                                                             [Token('BREAK',
+                                                                    'break')])])]),
+                                                Tree(
+                                                    'postfix_unary_expression',
+                                                    [Token('NAME',
+                                                           'test_print'),
+                                                     Tree('call_suffix', [
+                                                         Tree(
+                                                             'postfix_unary_expression',
+                                                             [Token('NAME',
+                                                                    'str'),
+                                                              Tree(
+                                                                  'call_suffix',
+                                                                  [Token(
+                                                                      'NAME',
+                                                                      'x')])])])]),
+                                                Tree('assignment',
+                                                     [Token('NAME', 'x'),
+                                                      Token(
+                                                          'ASSIGNMENT_OPERATOR',
+                                                          '='), Tree(
+                                                         'additive_expression',
+                                                         [Token('NAME', 'x'),
+                                                          Token(
+                                                              'ADDITIVE_OPERATOR',
+                                                              '+'),
+                                                          Token('DEC_NUMBER',
+                                                                '1')])])])])])])])
+
+    with io.StringIO(snippet) as f:
+        res, msg = compare_trees(expected, parser.parse(f))
+        assert res, msg
