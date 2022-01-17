@@ -193,6 +193,25 @@ def test_for_statement_with_no_cycles(grammar: str):
     assert len(outputs) == 0
 
 
+def test_while_statement(grammar: str):
+    snippet = r"""
+       main() None {
+           var x int = 0
+           while x < 5 {
+                test_print(str(x))
+                x = x + 1
+           }
+       }
+       """
+    outputs = interpret(snippet, grammar)
+    assert len(outputs) == 5
+    assert outputs[0] == '0'
+    assert outputs[1] == '1'
+    assert outputs[2] == '2'
+    assert outputs[3] == '3'
+    assert outputs[4] == '4'
+
+
 def test_multiplication(grammar: str):
     snippet = r"""
        main() None {

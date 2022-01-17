@@ -187,15 +187,17 @@ class Interpreter(Visitor):
     def assignment(self, node: TreeWithUnit[Assignment]):
         right = self.eval(node.unit.right)
         left = node.unit.left
+
         # Variable declaration
         if isinstance(node.unit.left, TreeWithUnit):
             variable_declaration = left.unit
             assert isinstance(variable_declaration, VariableDeclaration)
             name = variable_declaration.variable_name
+            self.closure.assign_value(name, right)
+
         # Reassignment
         else:
-            name = left
-        self.closure.assign_value(name, right)
+            self.closure.reassign_value(left, right)
 
     def call_func(self, name: str, args):
         fn = self.closure.lookup(name)
@@ -234,6 +236,12 @@ class Interpreter(Visitor):
         items = self.eval(node.unit.expression)
         for item in items:
             self.eval_in_closure(lambda: func(node.unit.name, item))
+
+    def while_statement(self, node: TreeWithUnit[WhileStatement]):
+        should_continue = self.eval(node.unit.expression)
+        while should_continue:
+            self.visit_once(node.unit.statements_block)
+            should_continue = self.eval(node.unit.expression)
 
     def equality(self, node: TreeWithUnit[Equality]):
         children_iter = iter(node.unit.comparison_and_operators)
