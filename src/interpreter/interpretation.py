@@ -20,15 +20,33 @@ class Closure:
     def __init__(self, parent=None):
         super().__init__()
         self.parent: Closure = parent
-        self.name_to_value: Dict[str, Any] = {}
-        self.name_to_function: Dict[str, Any] = {}
+        self._name_to_value: Dict[str, Any] = {}
+        self._name_to_function: Dict[str, Any] = {}
+
+    def assign_value(self, name, value):
+        self._name_to_value[name] = value
+
+    def reassign_value(self, name, value):
+        if self._name_to_value.get(name, None) is not None:
+            self._name_to_value[name] = value
+        else:
+            self.parent.reassign_value(name, value)
+
+    def assign_function(self, name, func):
+        self._name_to_function[name] = func
+
+    def reassign_function(self, name, func):
+        if self._name_to_function.get(name, None) is not None:
+            self._name_to_function[name] = func
+        else:
+            self.parent.reassign_function(name, func)
 
     def lookup(self, name: str):
-        x = self.name_to_function.get(name, None)
+        x = self._name_to_function.get(name, None)
         if x is not None:
             return x
 
-        x = self.name_to_value.get(name, None)
+        x = self._name_to_value.get(name, None)
         if x is not None:
             return x
 
@@ -75,13 +93,13 @@ class Interpreter(Visitor):
             return self.closure.lookup(node)
 
     def interpret(self, tree):
-        self.closure.name_to_function['print'] = print
-        self.closure.name_to_function['str'] = str
-        self.closure.name_to_function['test_print'] = lambda it: self.test_outputs.append(it)
-        self.closure.name_to_function['append'] = lambda value, elements: elements.append(value)
-        self.closure.name_to_function['remove'] = lambda value, elements: elements.remove(value)
-        self.closure.name_to_function['len'] = lambda elements: len(elements)
-        self.closure.name_to_function['range'] = range
+        self.closure.assign_function('print', print)
+        self.closure.assign_function('str', str)
+        self.closure.assign_function('test_print', lambda it: self.test_outputs.append(it))
+        self.closure.assign_function('append', lambda value, elements: elements.append(value))
+        self.closure.assign_function('remove', lambda value, elements: elements.remove(value))
+        self.closure.assign_function('len', lambda elements: len(elements))
+        self.closure.assign_function('range', range)
         main = self.visit_once(tree)
         main()
         if self.is_test:
@@ -111,13 +129,13 @@ class Interpreter(Visitor):
                 params_iter = iter(params)
                 for arg in args:
                     param = next(params_iter)
-                    self.closure.name_to_value[param.unit.name] = arg
+                    self.closure.assign_value(param.unit.name, arg)
                 return self.visit_once(node.unit.statements_block)
 
             return self.eval_in_closure(inner)
 
         name = node.unit.name
-        self.closure.name_to_function[name] = fn
+        self.closure.assign_function(name, fn)
 
     def statements_block(self, node: TreeWithUnit[StatementsBlock]):
         def inner():
@@ -177,7 +195,7 @@ class Interpreter(Visitor):
         # Reassignment
         else:
             name = left
-        self.closure.name_to_value[name] = right
+        self.closure.assign_value(name, right)
 
     def call_func(self, name: str, args):
         fn = self.closure.lookup(name)
@@ -210,7 +228,7 @@ class Interpreter(Visitor):
 
     def for_statement(self, node: TreeWithUnit[ForStatement]):
         def func(name, value):
-            self.closure.name_to_value[name] = value
+            self.closure.assign_value(name, value)
             self.visit_once(node.unit.statements_block)
 
         items = self.eval(node.unit.expression)
