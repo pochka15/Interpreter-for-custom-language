@@ -5,6 +5,10 @@
 This is an interpreter for the language that was designed by my own. It's a drill university project for the compilation
 techniques course.
 
+### Note
+
+This is already a closed project. There's still a lot to do. The semantic analysis mostly haven't been implemented. Interpreter itself has bugs with coloure logic and it needs to be tested deeply.
+
 ## About the language
 
 The syntax of the language is a mixture of a python and some mainstream languages like kotlin or swift. It's a
